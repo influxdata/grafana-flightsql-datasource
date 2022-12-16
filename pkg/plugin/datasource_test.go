@@ -8,7 +8,7 @@ import (
 )
 
 func TestQueryData(t *testing.T) {
-	ds := Datasource{}
+	ds := FlightDatasource{}
 
 	resp, err := ds.QueryData(
 		context.Background(),

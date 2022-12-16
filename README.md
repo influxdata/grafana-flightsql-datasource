@@ -49,6 +49,10 @@ plugin.json - defines capabilities of plugin - ie that it's a backend datasource
 
 module.ts - entrypoint for plugin wraps up - DataSourcePlugin
 
-ConfigEditor.tsx - connection to datasource
+src/components/ConfigEditor.tsx - connection to datasource
 
-QueryEditor.tsx - query ui feature set
+src/components/QueryEditor.tsx - query ui feature set
+
+pkg/plugin/main.go - entrypoint into backend
+
+pkg/plugin/datasource.go - backend logic

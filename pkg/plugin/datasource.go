@@ -3,13 +3,17 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/rand"
+	"net/url"
 	"time"
 
+	"github.com/apache/arrow/go/arrow/flight"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"google.golang.org/grpc"
 )
 
 // Make sure Datasource implements required interfaces. This is important to do
@@ -18,24 +22,59 @@ import (
 // backend.CheckHealthHandler interfaces. Plugin should not implement all these
 // interfaces- only those which are required for a particular task.
 var (
-	_ backend.QueryDataHandler      = (*Datasource)(nil)
-	_ backend.CheckHealthHandler    = (*Datasource)(nil)
-	_ instancemgmt.InstanceDisposer = (*Datasource)(nil)
+	_ backend.QueryDataHandler      = (*FlightDatasource)(nil)
+	_ backend.CheckHealthHandler    = (*FlightDatasource)(nil)
+	_ instancemgmt.InstanceDisposer = (*FlightDatasource)(nil)
 )
 
-// NewDatasource creates a new datasource instance.
-func NewDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	return &Datasource{}, nil
+type flightConfig struct {
+	Host     string `json:"host"`
+	Database string `json:"database"`
+	Token    string `json:"token"`
 }
 
-// Datasource is an example datasource which can respond to data queries, reports
-// its health and has streaming skills.
-type Datasource struct{}
+type FlightDatasource struct {
+	Host     string
+	Database string
+	Token    string
+	Client   flight.FlightServiceClient
+}
+
+// NewDatasource creates a new datasource instance.
+func NewDatasource(config backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	var fc flightConfig
+	err := json.Unmarshal(config.JSONData, &fc)
+	if err != nil {
+		return nil, fmt.Errorf("error while unmarshalling datasource config: %s", err)
+	}
+
+	url, err := url.Parse(fc.Host)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, url.Host, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	client := flight.NewFlightServiceClient(conn)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &FlightDatasource{Host: fc.Host, Database: fc.Database, Token: fc.Token, Client: client}, nil
+}
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
 // created. As soon as datasource settings change detected by SDK old datasource instance will
 // be disposed and a new one will be created using NewSampleDatasource factory function.
-func (d *Datasource) Dispose() {
+func (d *FlightDatasource) Dispose() {
 	// Clean up datasource instance resources.
 }
 
@@ -43,7 +82,7 @@ func (d *Datasource) Dispose() {
 // req contains the queries []DataQuery (where each query contains RefID as a unique identifier).
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
-func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (d *FlightDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	// when logging at a non-Debug level, make sure you don't include sensitive information in the message
 	// (like the *backend.QueryDataRequest)
 	log.DefaultLogger.Debug("QueryData called", "numQueries", len(req.Queries))
@@ -65,7 +104,7 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 
 type queryModel struct{}
 
-func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+func (d *FlightDatasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	var response backend.DataResponse
 
 	// Unmarshal the JSON into our queryModel.
@@ -73,7 +112,7 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 
 	err := json.Unmarshal(query.JSON, &qm)
 	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, "json unmarshal: " + err.Error())
+		return backend.ErrDataResponse(backend.StatusBadRequest, "json unmarshal: "+err.Error())
 	}
 
 	// create data frame response.
@@ -95,7 +134,7 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (d *Datasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (d *FlightDatasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	// when logging at a non-Debug level, make sure you don't include sensitive information in the message
 	// (like the *backend.QueryDataRequest)
 	log.DefaultLogger.Debug("CheckHealth called")
