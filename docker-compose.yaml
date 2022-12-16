@@ -11,4 +11,4 @@ services:
       - 3000:3000/tcp
     volumes:
       - ./dist:/var/lib/grafana/plugins/grafana-flight-datasource
-      - ./provisioning:/etc/grafana/provisioning
+      # - ./provisioning:/etc/grafana/provisioning

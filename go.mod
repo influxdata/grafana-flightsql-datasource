@@ -2,11 +2,14 @@ module github.com/grafana/flight-datasource
 
 go 1.19
 
-require github.com/grafana/grafana-plugin-sdk-go v0.147.0
+require (
+	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40
+	github.com/grafana/grafana-plugin-sdk-go v0.147.0
+	google.golang.org/grpc v1.41.0
+)
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
-	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
@@ -60,7 +63,6 @@ require (
 	golang.org/x/text v0.3.6 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto v0.0.0-20210630183607-d20f26d13c79 // indirect
-	google.golang.org/grpc v1.41.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

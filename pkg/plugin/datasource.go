@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"net/url"
 	"time"
 
 	"github.com/apache/arrow/go/arrow/flight"
@@ -40,33 +39,24 @@ type FlightDatasource struct {
 	Client   flight.FlightServiceClient
 }
 
-// NewDatasource creates a new datasource instance.
-func NewDatasource(config backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+// NewFlightDatasource creates a new datasource instance.
+func NewFlightDatasource(config backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	var fc flightConfig
 	err := json.Unmarshal(config.JSONData, &fc)
 	if err != nil {
 		return nil, fmt.Errorf("error while unmarshalling datasource config: %s", err)
 	}
 
-	url, err := url.Parse(fc.Host)
-	if err != nil {
-		return nil, err
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, url.Host, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.DialContext(ctx, fc.Host, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
 
 	client := flight.NewFlightServiceClient(conn)
-
-	if err != nil {
-		return nil, err
-	}
 
 	return &FlightDatasource{Host: fc.Host, Database: fc.Database, Token: fc.Token, Client: client}, nil
 }
