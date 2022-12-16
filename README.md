@@ -42,3 +42,13 @@ To run grafana using docker with this plugin loaded in run:
    `mage -l`
 
 Navigate to [Grafana homepage](http://localhost:3000/) and locate your datasource.
+
+## Grafana file structure
+
+plugin.json - defines capabilities of plugin - ie that it's a backend datasource
+
+module.ts - entrypoint for plugin wraps up - DataSourcePlugin
+
+ConfigEditor.tsx - connection to datasource
+
+QueryEditor.tsx - query ui feature set
