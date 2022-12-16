@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "datasource",
+  "name": "Flight Datasource",
+  "id": "grafana-flight-datasource",
+  "metrics": true,
+  "backend": true,
+  "executable": "gpx_flight_datasource",
+  "info": {
+    "description": "",
+    "author": {
+      "name": "Grafana"
+    },
+    "keywords": ["datasource"],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [],
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaDependency": "^9.2.5",
+    "plugins": []
+  }
+}
