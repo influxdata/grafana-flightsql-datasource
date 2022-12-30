@@ -1,6 +1,7 @@
 package flightsql
 
 import (
+	"fmt"
 	"runtime/debug"
 	"time"
 
@@ -10,13 +11,20 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-func newFrame(schema *arrow.Schema) *data.Frame {
-	// TODO(brett): Make use of schema.Metadata.
-	log.DefaultLogger.Info("Metadata", schema.Metadata())
+func newFrame(schema *arrow.Schema, sql string) *data.Frame {
+	log.DefaultLogger.Info(fmt.Sprintf(
+		"Schema: metadata=%v fields=%v",
+		schema.Metadata(),
+		schema.Fields(),
+	))
 
 	fields := schema.Fields()
 	df := &data.Frame{
 		Fields: make([]*data.Field, len(fields)),
+		Meta: &data.FrameMeta{
+			ExecutedQueryString: sql,
+			DataTopic:           data.DataTopic(sql),
+		},
 	}
 	nullable := make([]bool, len(fields))
 	for i, field := range fields {

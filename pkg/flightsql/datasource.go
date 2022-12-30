@@ -113,19 +113,19 @@ func (d *Datasource) query(ctx context.Context, sql string) backend.DataResponse
 	// use their functions, we'd end up writing the same amount of conversion
 	// code to adapt the APIs.
 	var resp backend.DataResponse
+	frame := newFrame(reader.Schema(), sql)
 	for reader.Next() {
 		record := reader.Record()
-		frame := newFrame(record.Schema())
 		for i, col := range record.Columns() {
 			copyData(frame.Fields[i], col)
 		}
-		resp.Frames = append(resp.Frames, frame)
 
 		if err := reader.Err(); err != nil && !errors.Is(err, io.EOF) {
 			resp.Error = err
 			break
 		}
 	}
+	resp.Frames = append(resp.Frames, frame)
 	return resp
 }
 
