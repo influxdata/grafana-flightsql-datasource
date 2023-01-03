@@ -1,4 +1,4 @@
-package plugin
+package flightsql
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestQueryData(t *testing.T) {
-	ds := FlightDatasource{}
+	ds := Datasource{}
 
 	resp, err := ds.QueryData(
 		context.Background(),
