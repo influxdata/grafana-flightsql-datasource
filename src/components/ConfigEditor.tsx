@@ -1,9 +1,7 @@
 import React, { ChangeEvent, PureComponent } from 'react';
-import { LegacyForms } from '@grafana/ui';
+import { InlineSwitch, FieldSet, InlineField, SecretInput, Input } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { MyDataSourceOptions } from '../types';
-
-const { SecretFormField, FormField } = LegacyForms;
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
 
@@ -37,47 +35,66 @@ export class ConfigEditor extends PureComponent<Props, State> {
     onOptionsChange({ ...options, jsonData });
   };
 
+  onSecureChange = () => {
+    const { onOptionsChange, options } = this.props;
+    const jsonData = {
+      ...options.jsonData,
+      secure: !options.jsonData.secure,
+    };
+    onOptionsChange({ ...options, jsonData });
+  };
+
   render() {
     const { options } = this.props;
     const { jsonData } = options;
-
     return (
-      <div className="gf-form-group">
-        <div className="gf-form">
-          <FormField
-            label="Host"
-            labelWidth={6}
-            inputWidth={20}
-            onChange={this.onHostChange}
+      <div>
+    <FieldSet label="FlightSQL Connection" width={400}>
+        <InlineField labelWidth={20} label="Host">
+          <Input
+            width={40}
+            name="host"
+            type="text"
             value={jsonData.host || ''}
-            placeholder=""
-          />
-        </div>
-        <div className="gf-form">
-          <FormField
-            label="Database"
-            labelWidth={6}
-            inputWidth={20}
+            placeholder="localhost:1234"
+            onChange={this.onHostChange}
+          ></Input>
+        </InlineField>
+      
+        <InlineField labelWidth={20} label="Database">
+          <Input
+            width={40}
+            name="database"
+            type="text"
+            placeholder="dbName"
             onChange={this.onDatabaseChange}
             value={jsonData.database || ''}
-            placeholder=""
-          />
-        </div>
+          ></Input>
+        </InlineField>
+        <InlineField labelWidth={20} label="Token">
+          <SecretInput
+            width={40}
+            name="token"
+            type="text"
+            value={jsonData.token || ''}
+            placeholder="****************"
+            onChange={this.onTokenChange}
+            onReset={() => {}}
+            isConfigured={false}
+          ></SecretInput>
+        </InlineField>
 
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <SecretFormField
-              value={jsonData.token || ''}
-              label="Token"
-              placeholder=""
-              labelWidth={6}
-              inputWidth={20}
-              onChange={this.onTokenChange}
-              onReset={() => {}}
-              isConfigured={false}
-            />
-          </div>
-        </div>
+
+        <InlineField labelWidth={20} label="Require TLS / SSL">
+        <InlineSwitch
+            label=""
+            value={jsonData.secure} 
+            onChange={this.onSecureChange}
+          showLabel={false}
+           disabled={false}
+         />
+        </InlineField>
+        </FieldSet>
       </div>
     );
   }

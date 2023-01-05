@@ -1,5 +1,5 @@
 {
-  "name": "flight-datasource",
+  "name": "flightsql-datasource",
   "version": "1.0.0",
   "description": "",
   "scripts": {
@@ -22,6 +22,7 @@
     "@grafana/e2e": "9.2.5",
     "@grafana/e2e-selectors": "9.2.5",
     "@grafana/eslint-config": "^5.1.0",
+    "@grafana/experimental": "^1.0.2",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@swc/core": "^1.2.144",
     "@swc/helpers": "^0.4.12",
@@ -54,8 +55,8 @@
     "sass-loader": "13.2.0",
     "style-loader": "3.3.1",
     "swc-loader": "^0.2.3",
-    "tsconfig-paths": "^4.1.0",
     "ts-node": "^10.5.0",
+    "tsconfig-paths": "^4.1.0",
     "typescript": "^4.4.0",
     "webpack": "^5.69.1",
     "webpack-cli": "^4.9.2",

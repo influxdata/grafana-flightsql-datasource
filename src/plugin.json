@@ -1,11 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
-  "name": "Flight Datasource",
-  "id": "grafana-flight-datasource",
+  "name": "FlightSQL",
+  "id": "grafana-flightsql-datasource",
   "metrics": true,
   "backend": true,
-  "executable": "gpx_flight_datasource",
+  "executable": "gpx_flightsql_datasource",
   "info": {
     "description": "",
     "author": {
@@ -13,8 +13,8 @@
     },
     "keywords": ["datasource"],
     "logos": {
-      "small": "img/logo.svg",
-      "large": "img/logo.svg"
+      "small": "img/arrow-logo.png",
+      "large": "img/arrow-logo.png"
     },
     "links": [],
     "screenshots": [],

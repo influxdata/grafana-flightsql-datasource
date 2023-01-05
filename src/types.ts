@@ -13,4 +13,5 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
   host?: string;
   database?: string;
   token?: string;
+  secure?: boolean;
 }

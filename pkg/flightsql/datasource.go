@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -29,6 +30,7 @@ type config struct {
 	Host     string `json:"host"`
 	Database string `json:"database"`
 	Token    string `json:"token"`
+	Secure   bool   `json:"secure"`
 }
 
 // Datasource is a Grafana datasource plugin for Flight SQL.
@@ -45,14 +47,28 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 		return nil, fmt.Errorf("config: %s", err)
 	}
 
-	pool, err := x509.SystemCertPool()
-	if err != nil {
-		return nil, fmt.Errorf("x509: %s", err)
-	}
-	client, err := flightsql.NewClient(cfg.Host, nil, nil,
-		grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, "")),
+	dialOptions := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
 		grpc.WithPerRPCCredentials(bearerToken{token: cfg.Token}),
-		grpc.WithBlock())
+	}
+
+	flightSQLSecure := cfg.Secure
+	if flightSQLSecure {
+		pool, err := x509.SystemCertPool()
+		if err != nil {
+			return nil, fmt.Errorf("x509: %s", err)
+		}
+
+		dialOptions = []grpc.DialOption{
+			grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, "")),
+			grpc.WithBlock(),
+			grpc.WithPerRPCCredentials(bearerToken{token: cfg.Token}),
+		}
+	}
+
+	client, err := flightsql.NewClient(cfg.Host, nil, nil, dialOptions...)
+
 	if err != nil {
 		return nil, fmt.Errorf("flightsql: %s", err)
 	}
@@ -140,7 +156,6 @@ func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 			Message: fmt.Sprintf("ERROR: %s", resp.Error),
 		}, nil
 	}
-
 	return &backend.CheckHealthResult{
 		Status:  backend.HealthStatusOk,
 		Message: "OK",
@@ -158,5 +173,5 @@ func (t bearerToken) GetRequestMetadata(ctx context.Context, in ...string) (map[
 }
 
 func (bearerToken) RequireTransportSecurity() bool {
-	return true
+	return false
 }
