@@ -19,9 +19,9 @@ import (
 )
 
 var (
-	_ backend.QueryDataHandler      = (*Datasource)(nil)
-	_ backend.CheckHealthHandler    = (*Datasource)(nil)
-	_ instancemgmt.InstanceDisposer = (*Datasource)(nil)
+	_ backend.QueryDataHandler      = (*FlightSQLDatasource)(nil)
+	_ backend.CheckHealthHandler    = (*FlightSQLDatasource)(nil)
+	_ instancemgmt.InstanceDisposer = (*FlightSQLDatasource)(nil)
 )
 
 const mdBucketName = "bucket-name"
@@ -33,8 +33,9 @@ type config struct {
 	Secure   bool   `json:"secure"`
 }
 
-// Datasource is a Grafana datasource plugin for Flight SQL.
-type Datasource struct {
+// FlightSQLDatasource is a Grafana datasource plugin for Flight SQL.
+type FlightSQLDatasource struct {
+	backend.CallResourceHandler
 	database string
 	client   *flightsql.Client
 }
@@ -49,7 +50,7 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 
 	dialOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
+		// grpc.WithBlock(),
 		grpc.WithPerRPCCredentials(bearerToken{token: cfg.Token}),
 	}
 
@@ -73,21 +74,22 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 		return nil, fmt.Errorf("flightsql: %s", err)
 	}
 
-	return &Datasource{
-		database: cfg.Database,
-		client:   client,
+	return &FlightSQLDatasource{
+		database:            cfg.Database,
+		client:              client,
+		CallResourceHandler: newResourceHandler(),
 	}, nil
 }
 
 // Dispose cleans up before we are reaped.
-func (d *Datasource) Dispose() {
+func (d *FlightSQLDatasource) Dispose() {
 	if err := d.client.Close(); err != nil {
 		log.DefaultLogger.Error(err.Error())
 	}
 }
 
 // QueryData fulfills query requests.
-func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (d *FlightSQLDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 
 	for _, qreq := range req.Queries {
@@ -108,7 +110,7 @@ type queryRequest struct {
 	MaxDataPoints        int    `json:"maxDataPoints"`
 }
 
-func (d *Datasource) query(ctx context.Context, sql string) backend.DataResponse {
+func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.DataResponse {
 	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
 
 	info, err := d.client.Execute(ctx, sql)
@@ -149,7 +151,7 @@ func (d *Datasource) query(ctx context.Context, sql string) backend.DataResponse
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (d *FlightSQLDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if resp := d.query(ctx, "select 1"); resp.Error != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
