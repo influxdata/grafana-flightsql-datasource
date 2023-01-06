@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings, CoreApp } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 
-import { SQLQuery, FlightSQLDataSourceOptions, DEFAULT_QUERY, TablesResponse, ColumnsResponse } from './types';
+import { SQLQuery, FlightSQLDataSourceOptions, DEFAULT_QUERY, ColumnsResponse } from './types';
 
 // import { getBackendSrv } from "@grafana/runtime"
 
@@ -22,7 +22,7 @@ export class FlightSQLDataSource extends DataSourceWithBackend<SQLQuery, FlightS
   //   };
   // }
 
-  getTables(): Promise<TablesResponse> {
+  getTables(): Promise<any> {
     return this.getResource('/get-tables');
   }
 

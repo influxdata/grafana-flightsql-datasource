@@ -37,8 +37,8 @@ const GetColumns = (datasource: FlightSQLDataSource): AsyncColumnsStateColumn =>
 
 const GetTables = (datasource: FlightSQLDataSource): AsyncTablesState => {
   const result = useAsync(async () => {
-    const { tables } = await datasource.getTables();
-    return tables.map((t) => ({
+    const res = await datasource.getTables();
+    return res.frames[0].data.values[0].map((t: string) => ({
       label: t,
       value: t,
     }));

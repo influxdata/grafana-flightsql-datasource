@@ -10,7 +10,6 @@ import (
 
 	"github.com/apache/arrow/go/v10/arrow/flight/flightsql"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"google.golang.org/grpc/metadata"
 )
@@ -28,9 +27,9 @@ func newResourceHandler(client *flightsql.Client, db string) backend.CallResourc
 	return httpadapter.New(mux)
 }
 
-type getTablesResponse struct {
-	Tables []string `json:"tables"`
-}
+// type getTablesResponse struct {
+// 	Tables []string `json:"tables"`
+// }
 
 func getTables(w http.ResponseWriter, r *http.Request, client *flightsql.Client, db string) {
 	if r.Method != http.MethodGet {
@@ -42,24 +41,15 @@ func getTables(w http.ResponseWriter, r *http.Request, client *flightsql.Client,
 	sql := "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'"
 
 	tableResp := query(ctx, client, sql, db)
-	log.DefaultLogger.Info("tableResp", tableResp)
 
-	// todo: map response to a object
-	// the ui can understand
+	jsonData, err := tableResp.MarshalJSON()
 
-	tables := &getTablesResponse{
-		Tables: []string{
-			"coindesk",
-			"airSensor",
-		},
-	}
-
-	t, err := json.Marshal(tables)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	_, err = w.Write(t)
+
+	_, err = w.Write(jsonData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
