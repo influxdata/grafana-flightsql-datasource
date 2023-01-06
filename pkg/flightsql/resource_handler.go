@@ -1,16 +1,28 @@
 package flightsql
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
 	"net/http"
 
+	"github.com/apache/arrow/go/v10/arrow/flight/flightsql"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"google.golang.org/grpc/metadata"
 )
 
-func newResourceHandler() backend.CallResourceHandler {
+func newResourceHandler(client *flightsql.Client, db string) backend.CallResourceHandler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/get-tables", getTables)
+	// mux.HandleFunc("/get-tables", getTables)
+
+	mux.HandleFunc("/get-tables", func(w http.ResponseWriter, req *http.Request) {
+		getTables(w, req, client, db)
+	})
+
 	mux.HandleFunc("/get-columns", getColumns)
 
 	return httpadapter.New(mux)
@@ -20,15 +32,20 @@ type getTablesResponse struct {
 	Tables []string `json:"tables"`
 }
 
-func getTables(w http.ResponseWriter, r *http.Request) {
+func getTables(w http.ResponseWriter, r *http.Request, client *flightsql.Client, db string) {
 	if r.Method != http.MethodGet {
 		http.NotFound(w, r)
 		return
 	}
 
-	// change this to a sql query
-	// sql := "SELECT * FROM information_schema.tables"
-	// map to response object that looks like this:
+	ctx := context.Background()
+	sql := "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'"
+
+	tableResp := query(ctx, client, sql, db)
+	log.DefaultLogger.Info("tableResp", tableResp)
+
+	// todo: map response to a object
+	// the ui can understand
 
 	tables := &getTablesResponse{
 		Tables: []string{
@@ -37,12 +54,12 @@ func getTables(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	j, err := json.Marshal(tables)
+	t, err := json.Marshal(tables)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	_, err = w.Write(j)
+	_, err = w.Write(t)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -83,4 +100,35 @@ func getColumns(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func query(ctx context.Context, client *flightsql.Client, sql string, db string) backend.DataResponse {
+	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, db)
+
+	info, err := client.Execute(ctx, sql)
+	if err != nil {
+		return backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
+	}
+
+	reader, err := client.DoGet(ctx, info.Endpoint[0].Ticket)
+	if err != nil {
+		return backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
+	}
+	defer reader.Release()
+
+	var resp backend.DataResponse
+	frame := newFrame(reader.Schema(), sql)
+	for reader.Next() {
+		record := reader.Record()
+		for i, col := range record.Columns() {
+			copyData(frame.Fields[i], col)
+		}
+
+		if err := reader.Err(); err != nil && !errors.Is(err, io.EOF) {
+			resp.Error = err
+			break
+		}
+	}
+	resp.Frames = append(resp.Frames, frame)
+	return resp
 }

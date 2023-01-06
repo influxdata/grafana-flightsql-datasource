@@ -77,7 +77,7 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 	return &FlightSQLDatasource{
 		database:            cfg.Database,
 		client:              client,
-		CallResourceHandler: newResourceHandler(),
+		CallResourceHandler: newResourceHandler(client, cfg.Database),
 	}, nil
 }
 
