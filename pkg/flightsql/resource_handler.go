@@ -70,6 +70,7 @@ func getColumns(w http.ResponseWriter, r *http.Request) {
 
 	// change this to a sql query
 	// sql := select * from information_schema.columns where table_name='tableName'
+	// SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'coindesk'
 	// map to response object that looks like this:
 	columns := &getColumnsResponse{
 		Columns: []string{

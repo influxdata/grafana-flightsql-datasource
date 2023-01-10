@@ -1,9 +1,13 @@
 import React, { ChangeEvent, useState } from 'react';
-import { LegacyForms, Select, InlineFieldRow, InlineField } from '@grafana/ui';
+import { LegacyForms, Select, InlineFieldRow, InlineField, Button, Monaco, monacoTypes} from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { FlightSQLDataSource } from '../datasource';
 import { FlightSQLDataSourceOptions, SQLQuery } from '../types';
 import { useAsync } from 'react-use';
+import { QueryEditorRaw } from './RawEditor';
+import { LanguageCompletionProvider, getStandardSQLCompletionProvider, } from '@grafana/experimental';
+import { formatSQL } from './sqlFormatter'
+
 
 const { FormField } = LegacyForms;
 
@@ -19,10 +23,15 @@ type AsyncColumnsStateColumn = {
   errorColumn: Error | undefined;
 };
 
+interface CompletionProviderGetterArgs {
+  getColumns: React.MutableRefObject<(t: SQLQuery) => Promise<any[]>>;
+  getTables: React.MutableRefObject<(d?: string) => Promise<any[]>>;
+}
+
 const GetColumns = (datasource: FlightSQLDataSource): AsyncColumnsStateColumn => {
   const result = useAsync(async () => {
     const { columns } = await datasource.getColumns();
-    return columns.map((c) => ({
+    return columns.map((c: any) => ({
       label: c,
       value: c,
     }));
@@ -51,21 +60,59 @@ const GetTables = (datasource: FlightSQLDataSource): AsyncTablesState => {
   };
 }
 
+export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => LanguageCompletionProvider =
+  ({ getColumns, getTables }) =>
+  (monaco, language) => ({
+    ...(language && getStandardSQLCompletionProvider(monaco, {...language, builtinFunctions: [''] })),
+    tables: {
+      resolve: async () => {
+        return await getTables.current();
+      },
+    },
+    columns: {
+      // resolve: async (t?: TableIdentifier) => {
+        resolve: async (t?: any) => {
+        return await getColumns.current(t);
+      },
+    },
+  });
+
+
 export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuery, FlightSQLDataSourceOptions>) {
   const { onChange, query, datasource } = props;  
 
   const onQueryTextChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange({ ...query, queryText: event.target.value });
     };
+
+  const onQueryRawSQLChange = (q: SQLQuery) => {
+    onChange(q);
+    };
+
   const { queryText } = props.query;
   const { loadingTable, tables, errorTable } = GetTables(datasource);
   const { loadingColumn, columns, errorColumn } = GetColumns(datasource);
   const [table, setTable] = useState<SelectableValue<string>>();
   const [column, setColumn] = useState<SelectableValue<string>>();
+  const [builderView, setView] = useState(false);
+  const args = {
+    getColumns: { current: () =>  datasource.getTables() },
+    getTables: { current: () =>  datasource.getColumns() },
+  };
+  const sqlLanguageDefinition = {
+    id: 'sql',
+    // id: 'pgsql',
+    completionProvider: getSqlCompletionProvider(args),
+    formatter: formatSQL,
+  };
 
   return  (
   <>
-    <FormField
+
+  {
+    builderView ? (
+      <>
+      <FormField
       labelWidth={8}
       inputWidth={30}
       value={queryText || ''}
@@ -95,6 +142,13 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
           />
         </InlineField>
       </InlineFieldRow>
+      </>
+    ) : (
+<QueryEditorRaw query={query} onChange={onQueryRawSQLChange} editorLanguageDefinition={sqlLanguageDefinition} />
+    )
+    
+  }
+   <Button fill="outline" size="sm" onClick={() => setView(!builderView)} >{builderView ? "Raw Editor" :  "Builder View"}</Button>
    </>
   )
 }
