@@ -17,14 +17,22 @@ interface CompletionProviderGetterArgs {
 export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => LanguageCompletionProvider =
   ({ getColumns, getTables }) =>
   (monaco, language) => ({
-    ...(language && getStandardSQLCompletionProvider(monaco, {...language, builtinFunctions: [''] })),
+    ...(language && getStandardSQLCompletionProvider(monaco, 
+      {...language, 
+        // todo: make custom for FlightSQL
+        // keywords?: string[];
+        // builtinFunctions?: string[];
+        // logicalOperators?: string[];
+        // comparisonOperators?: string[];
+        // operators?: string[];
+      }
+      )),
     tables: {
       resolve: async () => {
         return await getTables.current();
       },
     },
     columns: {
-      // resolve: async (t?: TableIdentifier) => {
         resolve: async (t?: any) => {
         return await getColumns.current(t);
       },
@@ -40,13 +48,13 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
     };
  
   const [builderView, setView] = useState(false);
+  // todo: fix these 
   const args = {
-    getColumns: { current: () =>  datasource.getTables() },
-    getTables: { current: () =>  datasource.getColumns() },
+    getTables: { current: () =>  datasource.getTables() },
+    getColumns: { current: (t: any) =>  datasource.getColumns(t) },
   };
   const sqlLanguageDefinition = {
     id: 'sql',
-    // id: 'pgsql',
     completionProvider: getSqlCompletionProvider(args),
     formatter: formatSQL,
   };

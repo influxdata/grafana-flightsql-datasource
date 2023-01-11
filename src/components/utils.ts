@@ -14,9 +14,9 @@ type AsyncTablesState = {
     errorColumn: Error | undefined;
   };
 
-export const GetColumns = (datasource: FlightSQLDataSource): AsyncColumnsStateColumn => {
+export const GetColumns = (datasource: FlightSQLDataSource, table: string): AsyncColumnsStateColumn => {
     const result = useAsync(async () => {
-      const { columns } = await datasource.getColumns();
+      const { columns } = await datasource.getColumns(table);
       return columns.map((c: any) => ({
         label: c,
         value: c,

@@ -1,36 +1,50 @@
-import React, {useState, ChangeEvent} from 'react';
+import React, {useEffect, useState} from 'react';
+// import { useAsync } from 'react-use';
 import { css } from '@emotion/css';
 
-// import { EditorRows, EditorRow, EditorField, InputGroup } from '@grafana/experimental';
-import { Select, LegacyForms, SegmentSection, InlineFieldRow } from '@grafana/ui';
+import { Select, SegmentSection } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
-const { FormField } = LegacyForms;
-import { GetTables, GetColumns } from './utils'
+// const { FormField } = LegacyForms;
+import { GetTables } from './utils'
 
 export function BuilderView({query, datasource, onChange}: any) {
-  const onQueryTextChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...query, queryText: event.target.value });
-    };
-  const { queryText } = query;
-  const { loadingTable, tables, errorTable } = GetTables(datasource);
-  const { loadingColumn, columns, errorColumn } = GetColumns(datasource);
+  // const onQueryTextChange = (event: ChangeEvent<HTMLInputElement>) => {
+  //   onChange({ ...query, queryText: event.target.value });
+  //   };
+  // const { queryText } = query;
   const [table, setTable] = useState<SelectableValue<string>>();
   const [column, setColumn] = useState<SelectableValue<string>>();
+  const { loadingTable, tables, errorTable } = GetTables(datasource);
+  // const { loadingColumn, columns, errorColumn } = GetColumns(datasource, table?.value! ||
+  //   '');
+  const [columns, setColumns] = useState()
   const formatCreateLabel = (v: string) => v;
   const selectClass = css({
     minWidth: '160px',
   });
+  useEffect(() => {
+    (async () => {
+      const res = await datasource.getColumns(table?.value);
+      console.log("res", res.frames[0])
+      const columns = res.frames[0].data.values[0].map((t: string) => ({
+        label: t,
+        value: t,
+      }))
+      setColumns(columns);
+    })();
+
+  }, [table])
   return (
     <>
     {/* <InlineFieldRow> */}
-    <FormField
+    {/* <FormField
       labelWidth={8}
       inputWidth={30}
       value={queryText || ''}
       onChange={onQueryTextChange}
       label="SQL"
       tooltip="SQL query text"
-      />
+      /> */}
       {/* </InlineFieldRow>
       <InlineFieldRow> */}
       <div className={selectClass}>
@@ -57,8 +71,8 @@ export function BuilderView({query, datasource, onChange}: any) {
     <Select
       options={columns}
       onChange={setColumn}
-      isLoading={loadingColumn}
-      disabled={!!errorColumn}
+      // isLoading={loadingColumn}
+      // disabled={!!errorColumn}
       value={column}
       allowCustomValue={true}
       autoFocus={true}

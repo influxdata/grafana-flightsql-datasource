@@ -2,7 +2,6 @@ package flightsql
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -16,20 +15,17 @@ import (
 
 func newResourceHandler(client *flightsql.Client, db string) backend.CallResourceHandler {
 	mux := http.NewServeMux()
-	// mux.HandleFunc("/get-tables", getTables)
 
 	mux.HandleFunc("/get-tables", func(w http.ResponseWriter, req *http.Request) {
 		getTables(w, req, client, db)
 	})
 
-	mux.HandleFunc("/get-columns", getColumns)
+	mux.HandleFunc("/get-columns", func(w http.ResponseWriter, req *http.Request) {
+		getColumns(w, req, client, db)
+	})
 
 	return httpadapter.New(mux)
 }
-
-// type getTablesResponse struct {
-// 	Tables []string `json:"tables"`
-// }
 
 func getTables(w http.ResponseWriter, r *http.Request, client *flightsql.Client, db string) {
 	if r.Method != http.MethodGet {
@@ -58,33 +54,24 @@ func getTables(w http.ResponseWriter, r *http.Request, client *flightsql.Client,
 	w.WriteHeader(http.StatusOK)
 }
 
-type getColumnsResponse struct {
-	Columns []string `json:"columns"`
-}
-
-func getColumns(w http.ResponseWriter, r *http.Request) {
+func getColumns(w http.ResponseWriter, r *http.Request, client *flightsql.Client, db string) {
 	if r.Method != http.MethodGet {
 		http.NotFound(w, r)
 		return
 	}
 
-	// change this to a sql query
-	// sql := select * from information_schema.columns where table_name='tableName'
-	// SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'coindesk'
-	// map to response object that looks like this:
-	columns := &getColumnsResponse{
-		Columns: []string{
-			"time",
-			"price",
-		},
-	}
+	ctx := context.Background()
+	tableName := r.URL.Query().Get("table")
+	sql := fmt.Sprintf("select column_name from INFORMATION_SCHEMA.COLUMNS where table_name = '%s'", tableName)
+	columnResp := query(ctx, client, sql, db)
 
-	j, err := json.Marshal(columns)
+	jsonData, err := columnResp.MarshalJSON()
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	_, err = w.Write(j)
+	_, err = w.Write(jsonData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

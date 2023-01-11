@@ -26,7 +26,7 @@ export class FlightSQLDataSource extends DataSourceWithBackend<SQLQuery, FlightS
     return this.getResource('/get-tables');
   }
 
-  getColumns(): Promise<any> {
-    return this.getResource('/get-columns');
+  getColumns(table: string): Promise<any> {
+    return this.getResource(`/get-columns?table=${table}`);
   }
 }
