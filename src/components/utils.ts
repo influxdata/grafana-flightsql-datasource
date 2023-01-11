@@ -45,3 +45,4 @@ export const GetColumns = (datasource: FlightSQLDataSource): AsyncColumnsStateCo
       errorTable: result.error,
     };
   }
+  
