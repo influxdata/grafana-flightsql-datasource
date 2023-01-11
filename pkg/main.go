@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	if err := datasource.Manage("grafana-flight-datasource", flightsql.NewDatasource, datasource.ManageOpts{}); err != nil {
+	if err := datasource.Manage("grafana-flightsql-datasource", flightsql.NewDatasource, datasource.ManageOpts{}); err != nil {
 		log.DefaultLogger.Error(err.Error())
 		os.Exit(1)
 	}
