@@ -51,7 +51,7 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 	dialOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		// grpc.WithBlock(),
-		grpc.WithPerRPCCredentials(bearerToken{token: cfg.Token}),
+		grpc.WithPerRPCCredentials(insecureBearerToken{token: cfg.Token}),
 	}
 
 	flightSQLSecure := cfg.Secure
@@ -63,7 +63,7 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 
 		dialOptions = []grpc.DialOption{
 			grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, "")),
-			grpc.WithBlock(),
+			// grpc.WithBlock(),
 			grpc.WithPerRPCCredentials(bearerToken{token: cfg.Token}),
 		}
 	}
@@ -175,5 +175,19 @@ func (t bearerToken) GetRequestMetadata(ctx context.Context, in ...string) (map[
 }
 
 func (bearerToken) RequireTransportSecurity() bool {
+	return true
+}
+
+type insecureBearerToken struct {
+	token string
+}
+
+func (t insecureBearerToken) GetRequestMetadata(ctx context.Context, in ...string) (map[string]string, error) {
+	return map[string]string{
+		"authorization": "Bearer " + t.token,
+	}, nil
+}
+
+func (insecureBearerToken) RequireTransportSecurity() bool {
 	return false
 }
