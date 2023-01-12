@@ -35,12 +35,11 @@ export function QueryEditorRaw({ children, onChange, query, width, height, edito
     },
     [onChange]
   );
-
   return (
     <SQLEditor
       width={width}
       height={height}
-      query={query.rawSql!}
+      query={query.queryText!}
       onChange={onRawQueryChange}
       language={editorLanguageDefinition}
       key="1"

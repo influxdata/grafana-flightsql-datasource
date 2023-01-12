@@ -9,36 +9,43 @@ import { LanguageCompletionProvider, getStandardSQLCompletionProvider, } from '@
 import { formatSQL } from './sqlFormatter'
 import { BuilderView } from './BuilderView';
 
-interface CompletionProviderGetterArgs {
-  getColumns: React.MutableRefObject<(t: SQLQuery) => Promise<any[]>>;
-  getTables: React.MutableRefObject<(d?: string) => Promise<any[]>>;
-}
+// interface CompletionProviderGetterArgs {
+//   // getSchemas: () => Promise<any[]>;
+//   getTables: () => Promise<any[]>;
+//   getColumns: (table?: string) => Promise<any[]>;
+// }
 
-export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => LanguageCompletionProvider =
-  ({ getColumns, getTables }) =>
-  (monaco, language) => ({
-    ...(language && getStandardSQLCompletionProvider(monaco, 
-      {...language, 
-        // todo: make custom for FlightSQL
-        // keywords?: string[];
-        // builtinFunctions?: string[];
-        // logicalOperators?: string[];
-        // comparisonOperators?: string[];
-        // operators?: string[];
-      }
-      )),
-    tables: {
-      resolve: async () => {
-        return await getTables.current();
+/// todo: make custom for FlightSQL
+// keywords?: string[];
+// builtinFunctions?: string[];
+// logicalOperators?: string[];
+// comparisonOperators?: string[];
+// operators?: string[];
+export const COMMON_AGGREGATE_FNS = ['AVG', 'COUNT', 'MAX', 'MIN', 'SUM'];
+export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider =
+  ({ getTables, getColumns }) =>
+  (monaco, language) => {
+    return {
+      ...(language && getStandardSQLCompletionProvider(monaco, {...language, builtinFunctions: COMMON_AGGREGATE_FNS} )),
+      triggerCharacters: ['.', ' ', '$', ',', '(', "'"],
+      // would this be useful
+      // schemas: {
+      //   resolve: getSchemas,
+      // },
+      tables: {
+        resolve: () => {
+          return getTables();
+        },
       },
-    },
-    columns: {
-        resolve: async (t?: any) => {
-        return await getColumns.current(t);
+      // how would this be implemented in this view
+      // as the table selection
+      // comes after the column selection
+      columns: {
+        resolve: (t: string) => getColumns(t),
       },
-    },
-  });
-
+      supportedMacros: () => [],
+    };
+  };
 
 export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuery, FlightSQLDataSourceOptions>) {
   const { onChange, query, datasource } = props;  
@@ -47,15 +54,39 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
     onChange(q);
     };
  
-  const [builderView, setView] = useState(false);
-  // todo: fix these 
-  const args = {
-    getTables: { current: () =>  datasource.getTables() },
-    getColumns: { current: (t: any) =>  datasource.getColumns(t) },
-  };
+  const [builderView, setView] = useState(true);
+
+  const getTables = useCallback(
+    async () => {
+      const res = await datasource.getTables();
+      return res.frames[0].data.values[0].map((t: string) => ({
+        name: t
+      }));
+    },
+    [datasource]
+  );
+
+  const getColumns = useCallback(
+    async (table: any) => {
+      const res = await datasource.getColumns(table?.value);
+      return res.frames[0].data.values[0].map((c: any) => ({
+      name: c
+      }))
+    },
+    [datasource]
+  );
+  
+  const completionProvider = useMemo(
+    () =>
+    getSqlCompletionProvider({
+        getTables,
+        getColumns,
+      }),
+    [getTables, getColumns]
+  );
+
   const sqlLanguageDefinition = {
     id: 'sql',
-    completionProvider: getSqlCompletionProvider(args),
     formatter: formatSQL,
   };
 
@@ -73,12 +104,15 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   <QueryEditorRaw  
     query={query} 
     onChange={onQueryRawSQLChange} 
-    editorLanguageDefinition={sqlLanguageDefinition} 
+    editorLanguageDefinition={{
+      ...sqlLanguageDefinition,
+      completionProvider,
+    }}
   />
     )
     
   }
-   <Button fill="outline" size="sm" onClick={() => setView(!builderView)} >{builderView ? "Raw Editor" :  "Builder View"}</Button>
+   <Button fill="outline" size="sm" onClick={() => setView(!builderView)} >{builderView ? "Edit SQL" :  "Builder View"}</Button>
    </>
   )
 }
