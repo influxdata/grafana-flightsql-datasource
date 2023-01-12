@@ -8,28 +8,6 @@ type AsyncTablesState = {
     errorTable: Error | undefined;
   };
   
-  type AsyncColumnsStateColumn = {
-    loadingColumn: boolean;
-    columns: Array<SelectableValue<string>>;
-    errorColumn: Error | undefined;
-  };
-
-export const GetColumns = (datasource: FlightSQLDataSource, table: string): AsyncColumnsStateColumn => {
-    const result = useAsync(async () => {
-      const { columns } = await datasource.getColumns(table);
-      return columns.map((c: any) => ({
-        label: c,
-        value: c,
-      }));
-    }, [datasource]);
-  
-    return {
-      loadingColumn: result.loading,
-      columns: result.value ?? [],
-      errorColumn: result.error,
-    };
-  }
-  
  export const GetTables = (datasource: FlightSQLDataSource): AsyncTablesState => {
     const result = useAsync(async () => {
       const res = await datasource.getTables();
@@ -45,4 +23,35 @@ export const GetColumns = (datasource: FlightSQLDataSource, table: string): Asyn
       errorTable: result.error,
     };
   }
+
+export const buildQueryString = (columns: string, table: string, where: string | undefined, orderBy: string | undefined, groupBy: string | undefined, limit: string | undefined): string => {
+
+  let queryStr = `SELECT ${columns} FROM ${table}`
+
+  if (where) {
+    queryStr = queryStr + ` WHERE ${where}`
+  }
+
+  if (groupBy) {
+    queryStr = queryStr + ` GROUP BY ${groupBy}`
+  }
+
+  if (orderBy) {
+    queryStr = queryStr + ` ORDER BY ${orderBy}`
+  }
+
+  if (limit) {
+    queryStr = queryStr + ` LIMIT ${limit}`
+  }
   
+  return queryStr
+} 
+
+export const checkCasing = (str: string) => {
+  const camelCase = /[A-Z]/.test(str)
+  if (camelCase) {
+    str = `"${str}"`
+  }
+
+  return str
+} 
