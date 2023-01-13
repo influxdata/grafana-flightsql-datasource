@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/apache/arrow/go/v10 v10.0.1
 	github.com/grafana/grafana-plugin-sdk-go v0.147.0
+	github.com/magefile/mage v1.14.0
 	google.golang.org/grpc v1.49.0
 )
 
@@ -41,7 +42,6 @@ require (
 	github.com/klauspost/asmfmt v1.3.2 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
-	github.com/magefile/mage v1.14.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
