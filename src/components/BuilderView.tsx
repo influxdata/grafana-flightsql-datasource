@@ -40,10 +40,10 @@ export function BuilderView({query, datasource, onChange}: any) {
   useEffect(() => {
     ;(async () => {
       const res = await datasource.getColumns(table?.value)
-      const columns = res.frames[0].data.values[0].map((t: any) => ({
+      const columns = res.frames[0].schema.fields.map((t: any) => ({
         index: '',
-        label: t,
-        value: t,
+        label: t.name,
+        value: t.name,
       }))
       setColumns(columns)
     })()

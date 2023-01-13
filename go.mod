@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/apache/arrow/go/v10 v10.0.1
+	github.com/go-chi/chi/v5 v5.0.8
 	github.com/grafana/grafana-plugin-sdk-go v0.147.0
 	github.com/magefile/mage v1.14.0
 	google.golang.org/grpc v1.49.0

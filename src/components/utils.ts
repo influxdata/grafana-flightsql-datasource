@@ -11,7 +11,7 @@ type AsyncTablesState = {
 export const GetTables = (datasource: FlightSQLDataSource): AsyncTablesState => {
   const result = useAsync(async () => {
     const res = await datasource.getTables()
-    return res.frames[0].data.values[0].map((t: string) => ({
+    return res.frames[0].data.values[2].map((t: string) => ({
       label: t,
       value: t,
     }))

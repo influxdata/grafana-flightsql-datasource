@@ -3,105 +3,131 @@ package flightsql
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
+	"time"
 
+	"github.com/apache/arrow/go/v10/arrow/array"
+	"github.com/apache/arrow/go/v10/arrow/flight"
 	"github.com/apache/arrow/go/v10/arrow/flight/flightsql"
+	"github.com/apache/arrow/go/v10/arrow/memory"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"google.golang.org/grpc/metadata"
 )
 
-func newResourceHandler(client *flightsql.Client, db string) backend.CallResourceHandler {
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/get-tables", func(w http.ResponseWriter, req *http.Request) {
-		getTables(w, req, client, db)
-	})
-
-	mux.HandleFunc("/get-columns", func(w http.ResponseWriter, req *http.Request) {
-		getColumns(w, req, client, db)
-	})
-
-	return httpadapter.New(mux)
-}
-
-func getTables(w http.ResponseWriter, r *http.Request, client *flightsql.Client, db string) {
-	if r.Method != http.MethodGet {
-		http.NotFound(w, r)
-		return
-	}
-
-	ctx := context.Background()
-	sql := "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'"
-
-	tableResp := query(ctx, client, sql, db)
-
-	jsonData, err := tableResp.MarshalJSON()
-
+func (d *FlightSQLDatasource) getSQLInfo(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
+	info, err := d.client.GetSqlInfo(ctx, []flightsql.SqlInfo{})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	_, err = w.Write(jsonData)
+	reader, err := d.client.DoGet(ctx, info.Endpoint[0].Ticket)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
-func getColumns(w http.ResponseWriter, r *http.Request, client *flightsql.Client, db string) {
-	if r.Method != http.MethodGet {
-		http.NotFound(w, r)
-		return
-	}
-
-	ctx := context.Background()
-	tableName := r.URL.Query().Get("table")
-	sql := fmt.Sprintf("select column_name from INFORMATION_SCHEMA.COLUMNS where table_name = '%s'", tableName)
-	columnResp := query(ctx, client, sql, db)
-
-	jsonData, err := columnResp.MarshalJSON()
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	_, err = w.Write(jsonData)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
-func query(ctx context.Context, client *flightsql.Client, sql string, db string) backend.DataResponse {
-	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, db)
-
-	info, err := client.Execute(ctx, sql)
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
-	}
-
-	reader, err := client.DoGet(ctx, info.Endpoint[0].Ticket)
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
 	}
 	defer reader.Release()
 
+	if err := writeDataResponse(w, newDataResponse(reader)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (d *FlightSQLDatasource) getTables(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
+	info, err := d.client.GetTables(ctx, &flightsql.GetTablesOpts{
+		TableTypes: []string{"BASE TABLE"},
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	reader, err := d.client.DoGet(ctx, info.Endpoint[0].Ticket)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer reader.Release()
+
+	if err := writeDataResponse(w, newDataResponse(reader)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (d *FlightSQLDatasource) getColumns(w http.ResponseWriter, r *http.Request) {
+	tableName := r.URL.Query().Get("table")
+	if tableName == "" {
+		http.Error(w, `query parameter "table" is required`, http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
+	info, err := d.client.GetTables(ctx, &flightsql.GetTablesOpts{
+		TableNameFilterPattern: &tableName,
+		IncludeSchema:          true,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	reader, err := d.client.DoGet(ctx, info.Endpoint[0].Ticket)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer reader.Release()
+
+	if !reader.Next() {
+		http.Error(w, "table not found", http.StatusNotFound)
+		return
+	}
+	rec := reader.Record()
+	rec.Retain()
+	defer rec.Release()
+	reader.Next()
+	if err := reader.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	indices := rec.Schema().FieldIndices("table_schema")
+	if len(indices) == 0 {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	col := rec.Column(indices[0])
+	serializedSchema := array.NewStringData(col.Data()).Value(0)
+	schema, err := flight.DeserializeSchema([]byte(serializedSchema), memory.DefaultAllocator)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	var resp backend.DataResponse
-	frame := newFrame(reader.Schema(), sql)
+	resp.Frames = append(resp.Frames, newFrame(schema, ""))
+	if err := writeDataResponse(w, resp); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func newDataResponse(reader *flight.Reader) backend.DataResponse {
+	var resp backend.DataResponse
+	frame := newFrame(reader.Schema(), "")
 	for reader.Next() {
 		record := reader.Record()
 		for i, col := range record.Columns() {
 			copyData(frame.Fields[i], col)
 		}
-
 		if err := reader.Err(); err != nil && !errors.Is(err, io.EOF) {
 			resp.Error = err
 			break
@@ -109,4 +135,13 @@ func query(ctx context.Context, client *flightsql.Client, sql string, db string)
 	}
 	resp.Frames = append(resp.Frames, frame)
 	return resp
+}
+
+func writeDataResponse(w io.Writer, resp backend.DataResponse) error {
+	json, err := resp.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(json)
+	return err
 }

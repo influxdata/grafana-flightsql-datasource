@@ -59,7 +59,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
 
   const getTables = useCallback(async () => {
     const res = await datasource.getTables()
-    return res.frames[0].data.values[0].map((t: string) => ({
+    return res.frames[0].data.values[2].map((t: string) => ({
       name: t,
     }))
   }, [datasource])
@@ -67,9 +67,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   const getColumns = useCallback(
     async (table: any) => {
       const res = await datasource.getColumns(table?.value)
-      return res.frames[0].data.values[0].map((c: any) => ({
-        name: c,
-      }))
+      return res.frames[0].schema.fields
     },
     [datasource]
   )
