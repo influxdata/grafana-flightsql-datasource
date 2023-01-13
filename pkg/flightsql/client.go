@@ -11,6 +11,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// newFlightSQLClient creats a new flightsql.Client from a Datasource
+// configuration structure. It establishes appropriate transport and RPC
+// security settings for the gRPC connection.
 func newFlightSQLClient(cfg config) (*flightsql.Client, error) {
 	dialOptions, err := grpcDialOptions(cfg)
 	if err != nil {
@@ -19,6 +22,8 @@ func newFlightSQLClient(cfg config) (*flightsql.Client, error) {
 	return flightsql.NewClient(cfg.Host, nil, nil, dialOptions...)
 }
 
+// bearerToken is a credentials.PerRPCCredentials implementation that populates
+// the `authorization` metadata field for all RPCs produced by a gRPC client.
 type bearerToken struct {
 	token                    string
 	requireTransportSecurity bool
@@ -34,6 +39,8 @@ func (t bearerToken) RequireTransportSecurity() bool {
 	return t.requireTransportSecurity
 }
 
+// grpcDialOptions produces appropriate gRPC dialing options w.r.t. security for
+// a given Datasource configuration structure.
 func grpcDialOptions(cfg config) ([]grpc.DialOption, error) {
 	opts := []grpc.DialOption{
 		grpc.WithBlock(),

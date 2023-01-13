@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// QueryData fulfills query requests.
+// QueryData executes batches of ad-hoc queries and returns a batch of results.
 func (d *FlightSQLDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 	for _, qreq := range req.Queries {
@@ -25,6 +25,8 @@ func (d *FlightSQLDatasource) QueryData(ctx context.Context, req *backend.QueryD
 	return response, nil
 }
 
+// queryRequest is an inbound query request as part of a batch of queries sent
+// to (*FlightSQLDatasource).QueryData.
 type queryRequest struct {
 	RefID                string `json:"refId"`
 	Text                 string `json:"queryText"`
@@ -32,6 +34,7 @@ type queryRequest struct {
 	MaxDataPoints        int    `json:"maxDataPoints"`
 }
 
+// query executes a SQL statement by issuing a `CommandStatementQuery` command to Flight SQL.
 func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.DataResponse {
 	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
 
