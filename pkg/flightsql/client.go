@@ -44,13 +44,13 @@ func grpcDialOptions(cfg config) ([]grpc.DialOption, error) {
 		if err != nil {
 			return nil, fmt.Errorf("x509: %s", err)
 		}
-		return append(opts, []grpc.DialOption{
+		return append(opts,
 			grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, "")),
 			grpc.WithPerRPCCredentials(bearerToken{token: cfg.Token, requireTransportSecurity: true}),
-		}...), nil
+		), nil
 	}
-	return append(opts, []grpc.DialOption{
+	return append(opts,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithPerRPCCredentials(bearerToken{token: cfg.Token}),
-	}...), nil
+	), nil
 }
