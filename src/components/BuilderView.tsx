@@ -5,9 +5,11 @@ import {Select, SegmentSection, InlineLabel, Input} from '@grafana/ui'
 import {SelectableValue} from '@grafana/data'
 import {GetTables, checkCasing, buildQueryString} from './utils'
 import {SelectColumn} from './SelectColumn'
+import {WhereExp} from './WhereExp'
 
 export function BuilderView({query, datasource, onChange}: any) {
   const [columnValues, setColumnValues] = useState([{value: ''}])
+  const [whereValues, setWhereValues] = useState([{value: ''}])
 
   const handleColumnChange = (column: any) => {
     let newColumnValues = [...columnValues]
@@ -24,6 +26,22 @@ export function BuilderView({query, datasource, onChange}: any) {
     newColumnValues.splice(i, 1)
     setColumnValues(newColumnValues)
   }
+
+  const handleWhereChange = (where: any) => {
+    let newWhereValues = [...whereValues]
+    newWhereValues[where.index]['value'] = where.value
+    setWhereValues(newWhereValues)
+  }
+
+  const addWheres = () => {
+    setWhereValues([...whereValues, {value: ''}])
+  }
+
+  const removeWheres = (i: any) => {
+    let newWhereValues = [...whereValues]
+    newWhereValues.splice(i, 1)
+    setWhereValues(newWhereValues)
+  }
   const [groupBy, setGroupBy] = useState('')
   const [where, setWhere] = useState('')
   const [orderBy, setOrderBy] = useState('')
@@ -39,8 +57,11 @@ export function BuilderView({query, datasource, onChange}: any) {
 
   useEffect(() => {
     ;(async () => {
-      const res = await datasource.getColumns(table?.value)
-      const columns = res.frames[0].schema.fields.map((t: any) => ({
+      let res
+      if (table?.value) {
+        res = table?.value && (await datasource.getColumns(table?.value))
+      }
+      const columns = res?.frames[0].schema.fields.map((t: any) => ({
         index: '',
         label: t.name,
         value: t.name,
@@ -56,11 +77,12 @@ export function BuilderView({query, datasource, onChange}: any) {
         .join(',')
         .replace(/,\s*$/, '')
       const t = checkCasing(table.value || '')
-      const queryText = buildQueryString(selectColumns, t, where, orderBy, groupBy, limit)
+      const whereExps = whereValues.map((w) => w.value).join(' and ')
+      const queryText = buildQueryString(selectColumns, t, whereExps, orderBy, groupBy, limit)
       onChange({...query, queryText: queryText})
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [table, columnValues, groupBy, where, orderBy, limit, column])
+  }, [table, columnValues, groupBy, whereValues, orderBy, limit, column])
 
   useEffect(() => {
     if (column) {
@@ -68,6 +90,13 @@ export function BuilderView({query, datasource, onChange}: any) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [column])
+
+  useEffect(() => {
+    if (where) {
+      handleWhereChange(where)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [where])
 
   useEffect(() => {
     setColumnValues([{value: ''}])
@@ -87,7 +116,7 @@ export function BuilderView({query, datasource, onChange}: any) {
             autoFocus={true}
             formatCreateLabel={formatCreateLabel}
             width={15}
-            placeholder=""
+            placeholder="table"
           />
         </SegmentSection>
       </div>
@@ -114,22 +143,23 @@ export function BuilderView({query, datasource, onChange}: any) {
       </div>
       <div className={selectClass}>
         <SegmentSection label="WHERE" fill={true}>
-          <Input
-            autoFocus
-            type="text"
-            spellCheck={false}
-            onBlur={() => {}}
-            onKeyDown={(e: any) => {
-              if (e.key === 'Enter') {
-                onChange(where)
-              }
-            }}
-            onChange={(e: any) => {
-              setWhere(e.currentTarget.value)
-            }}
-            value={where}
-            width={15}
-          />
+          {whereValues.map((w, index) => (
+            <>
+              <WhereExp
+                whereValues={whereValues}
+                index={index}
+                onChange={onChange}
+                value={w.value}
+                setWhere={setWhere}
+              />
+              <InlineLabel as="button" className="" onClick={addWheres} width="auto">
+                +
+              </InlineLabel>
+              <InlineLabel as="button" className="" width="auto" onClick={removeWheres}>
+                -
+              </InlineLabel>
+            </>
+          ))}
         </SegmentSection>
       </div>
       <div className={selectClass}>
@@ -149,6 +179,7 @@ export function BuilderView({query, datasource, onChange}: any) {
             }}
             value={groupBy}
             width={15}
+            placeholder="(optional)"
           />
         </SegmentSection>
       </div>
@@ -169,6 +200,7 @@ export function BuilderView({query, datasource, onChange}: any) {
             }}
             value={orderBy}
             width={15}
+            placeholder="(optional)"
           />
         </SegmentSection>
       </div>
@@ -189,6 +221,7 @@ export function BuilderView({query, datasource, onChange}: any) {
             }}
             value={limit}
             width={15}
+            placeholder="(optional)"
           />
         </SegmentSection>
       </div>

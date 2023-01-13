@@ -27,16 +27,18 @@ export const GetTables = (datasource: FlightSQLDataSource): AsyncTablesState => 
 export const buildQueryString = (
   columns: string,
   table: string,
-  where: string | undefined,
+  whereExp: string,
   orderBy: string | undefined,
   groupBy: string | undefined,
   limit: string | undefined
 ): string => {
   let queryStr = `SELECT ${columns} FROM ${table}`
 
-  if (where) {
-    queryStr = queryStr + ` WHERE ${where}`
+  if (whereExp) {
+    queryStr = queryStr + ` WHERE ${whereExp}`
   }
+
+  console.log('query', queryStr)
 
   if (groupBy) {
     queryStr = queryStr + ` GROUP BY ${groupBy}`

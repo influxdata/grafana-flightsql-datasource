@@ -66,8 +66,11 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
 
   const getColumns = useCallback(
     async (table: any) => {
-      const res = await datasource.getColumns(table?.value)
-      return res.frames[0].schema.fields
+      let res
+      if (table?.value) {
+        res = await datasource.getColumns(table?.value)
+      }
+      return res?.frames[0].schema.fields
     },
     [datasource]
   )

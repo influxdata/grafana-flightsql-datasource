@@ -14,7 +14,7 @@ export const SelectColumn = ({columns, index, setColumn, column, formatCreateLab
       autoFocus={true}
       formatCreateLabel={formatCreateLabel}
       width={15}
-      placeholder=""
+      placeholder="column"
     />
   )
 }
