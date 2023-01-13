@@ -38,8 +38,6 @@ export const buildQueryString = (
     queryStr = queryStr + ` WHERE ${whereExp}`
   }
 
-  console.log('query', queryStr)
-
   if (groupBy) {
     queryStr = queryStr + ` GROUP BY ${groupBy}`
   }
