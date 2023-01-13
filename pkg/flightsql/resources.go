@@ -101,7 +101,7 @@ func (d *FlightSQLDatasource) getColumns(w http.ResponseWriter, r *http.Request)
 
 	indices := rec.Schema().FieldIndices("table_schema")
 	if len(indices) == 0 {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "table_schema field not found", http.StatusInternalServerError)
 		return
 	}
 	col := rec.Column(indices[0])
