@@ -1,11 +1,6 @@
-// import { css } from '@emotion/css';
 import React, {useCallback, useEffect, useRef} from 'react'
 
 import {LanguageDefinition, SQLEditor} from '@grafana/experimental'
-// import { useStyles2, useTheme2 } from '@grafana/ui';
-// import { GrafanaTheme2 } from '@grafana/data';
-
-// import { SQLQuery } from '../../types';
 
 type Props = {
   query: any
@@ -16,9 +11,7 @@ type Props = {
   editorLanguageDefinition: LanguageDefinition
 }
 
-export function QueryEditorRaw({children, onChange, query, width, height, editorLanguageDefinition}: Props) {
-  // const theme = useTheme2();
-  // const styles = useStyles2(getStyles);
+export function RawEditor({children, onChange, query, width, height, editorLanguageDefinition}: Props) {
   const queryRef = useRef<any>(query)
   useEffect(() => {
     queryRef.current = query
@@ -36,28 +29,17 @@ export function QueryEditorRaw({children, onChange, query, width, height, editor
     [onChange]
   )
   return (
-    <SQLEditor
-      width={width}
-      height={height}
-      query={query.queryText!}
-      onChange={onRawQueryChange}
-      language={editorLanguageDefinition}
-      key="1"
-    >
-      {children}
-    </SQLEditor>
+    <div>
+      <SQLEditor
+        width={width}
+        height={height}
+        query={query.queryText!}
+        onChange={onRawQueryChange}
+        language={editorLanguageDefinition}
+        key="1"
+      >
+        {children}
+      </SQLEditor>
+    </div>
   )
 }
-
-// function getStyles(theme: GrafanaTheme2) {
-//   return {
-//     modal: css`
-//       width: 95vw;
-//       height: 95vh;
-//     `,
-//     modalContent: css`
-//       height: 100%;
-//       padding-top: 0;
-//     `,
-//   };
-// }

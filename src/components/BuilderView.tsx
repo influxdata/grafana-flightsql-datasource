@@ -5,9 +5,11 @@ import {Select, SegmentSection, InlineLabel, Input} from '@grafana/ui'
 import {SelectableValue} from '@grafana/data'
 import {GetTables, checkCasing, buildQueryString} from './utils'
 import {SelectColumn} from './SelectColumn'
+import {WhereExp} from './WhereExp'
 
 export function BuilderView({query, datasource, onChange}: any) {
   const [columnValues, setColumnValues] = useState([{value: ''}])
+  const [whereValues, setWhereValues] = useState([{value: ''}])
 
   const handleColumnChange = (column: any) => {
     let newColumnValues = [...columnValues]
@@ -24,6 +26,22 @@ export function BuilderView({query, datasource, onChange}: any) {
     newColumnValues.splice(i, 1)
     setColumnValues(newColumnValues)
   }
+
+  const handleWhereChange = (where: any) => {
+    let newWhereValues = [...whereValues]
+    newWhereValues[where.index]['value'] = where.value
+    setWhereValues(newWhereValues)
+  }
+
+  const addWheres = () => {
+    setWhereValues([...whereValues, {value: ''}])
+  }
+
+  const removeWheres = (i: any) => {
+    let newWhereValues = [...whereValues]
+    newWhereValues.splice(i, 1)
+    setWhereValues(newWhereValues)
+  }
   const [groupBy, setGroupBy] = useState('')
   const [where, setWhere] = useState('')
   const [orderBy, setOrderBy] = useState('')
@@ -39,8 +57,11 @@ export function BuilderView({query, datasource, onChange}: any) {
 
   useEffect(() => {
     ;(async () => {
-      const res = await datasource.getColumns(table?.value)
-      const columns = res.frames[0].schema.fields.map((t: any) => ({
+      let res
+      if (table?.value) {
+        res = table?.value && (await datasource.getColumns(table?.value))
+      }
+      const columns = res?.frames[0].schema.fields.map((t: any) => ({
         index: '',
         label: t.name,
         value: t.name,
@@ -56,16 +77,26 @@ export function BuilderView({query, datasource, onChange}: any) {
         .join(',')
         .replace(/,\s*$/, '')
       const t = checkCasing(table.value || '')
-      const queryText = buildQueryString(selectColumns, t, where, orderBy, groupBy, limit)
+      const whereExps = whereValues.map((w) => w.value).join(' and ')
+      const queryText = buildQueryString(selectColumns, t, whereExps, orderBy, groupBy, limit)
       onChange({...query, queryText: queryText})
     }
-  }, [table, columnValues, groupBy, where, orderBy, limit, column])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table, columnValues, groupBy, whereValues, orderBy, limit, column])
 
   useEffect(() => {
     if (column) {
       handleColumnChange(column)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [column])
+
+  useEffect(() => {
+    if (where) {
+      handleWhereChange(where)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [where])
 
   useEffect(() => {
     setColumnValues([{value: ''}])
@@ -84,15 +115,15 @@ export function BuilderView({query, datasource, onChange}: any) {
             allowCustomValue={true}
             autoFocus={true}
             formatCreateLabel={formatCreateLabel}
-            width={30}
-            placeholder=""
+            width={15}
+            placeholder="table"
           />
         </SegmentSection>
       </div>
-      {columnValues.map((c, index) => {
-        return (
-          <div className={selectClass} key={index}>
-            <SegmentSection label="SELECT" fill={true}>
+      <div className={selectClass}>
+        <SegmentSection label="SELECT" fill={true}>
+          {columnValues.map((c, index) => (
+            <>
               <SelectColumn
                 columns={columns}
                 setColumn={setColumn}
@@ -106,28 +137,29 @@ export function BuilderView({query, datasource, onChange}: any) {
               <InlineLabel as="button" className="" width="auto" onClick={removeColumns}>
                 -
               </InlineLabel>
-            </SegmentSection>
-          </div>
-        )
-      })}
+            </>
+          ))}
+        </SegmentSection>
+      </div>
       <div className={selectClass}>
         <SegmentSection label="WHERE" fill={true}>
-          <Input
-            autoFocus
-            type="text"
-            spellCheck={false}
-            onBlur={() => {}}
-            onKeyDown={(e: any) => {
-              if (e.key === 'Enter') {
-                onChange(where)
-              }
-            }}
-            onChange={(e: any) => {
-              setWhere(e.currentTarget.value)
-            }}
-            value={where}
-            width={30}
-          />
+          {whereValues.map((w, index) => (
+            <>
+              <WhereExp
+                whereValues={whereValues}
+                index={index}
+                onChange={onChange}
+                value={w.value}
+                setWhere={setWhere}
+              />
+              <InlineLabel as="button" className="" onClick={addWheres} width="auto">
+                +
+              </InlineLabel>
+              <InlineLabel as="button" className="" width="auto" onClick={removeWheres}>
+                -
+              </InlineLabel>
+            </>
+          ))}
         </SegmentSection>
       </div>
       <div className={selectClass}>
@@ -146,7 +178,8 @@ export function BuilderView({query, datasource, onChange}: any) {
               setGroupBy(e.currentTarget.value)
             }}
             value={groupBy}
-            width={30}
+            width={15}
+            placeholder="(optional)"
           />
         </SegmentSection>
       </div>
@@ -166,7 +199,8 @@ export function BuilderView({query, datasource, onChange}: any) {
               setOrderBy(e.currentTarget.value)
             }}
             value={orderBy}
-            width={30}
+            width={15}
+            placeholder="(optional)"
           />
         </SegmentSection>
       </div>
@@ -186,7 +220,8 @@ export function BuilderView({query, datasource, onChange}: any) {
               setLimit(e.currentTarget.value)
             }}
             value={limit}
-            width={30}
+            width={15}
+            placeholder="(optional)"
           />
         </SegmentSection>
       </div>

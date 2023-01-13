@@ -4,7 +4,7 @@ import {QueryEditorProps} from '@grafana/data'
 import {FlightSQLDataSource} from '../datasource'
 import {FlightSQLDataSourceOptions, SQLQuery} from '../types'
 
-import {QueryEditorRaw} from './RawEditor'
+import {QueryEditorRaw} from './QueryEditorRaw'
 import {LanguageCompletionProvider, getStandardSQLCompletionProvider} from '@grafana/experimental'
 import {formatSQL} from './sqlFormatter'
 import {BuilderView} from './BuilderView'
@@ -66,8 +66,11 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
 
   const getColumns = useCallback(
     async (table: any) => {
-      const res = await datasource.getColumns(table?.value)
-      return res.frames[0].schema.fields
+      let res
+      if (table?.value) {
+        res = await datasource.getColumns(table?.value)
+      }
+      return res?.frames[0].schema.fields
     },
     [datasource]
   )
