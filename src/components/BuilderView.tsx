@@ -59,12 +59,14 @@ export function BuilderView({query, datasource, onChange}: any) {
       const queryText = buildQueryString(selectColumns, t, where, orderBy, groupBy, limit)
       onChange({...query, queryText: queryText})
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, columnValues, groupBy, where, orderBy, limit, column])
 
   useEffect(() => {
     if (column) {
       handleColumnChange(column)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [column])
 
   useEffect(() => {
@@ -84,15 +86,15 @@ export function BuilderView({query, datasource, onChange}: any) {
             allowCustomValue={true}
             autoFocus={true}
             formatCreateLabel={formatCreateLabel}
-            width={30}
+            width={15}
             placeholder=""
           />
         </SegmentSection>
       </div>
-      {columnValues.map((c, index) => {
-        return (
-          <div className={selectClass} key={index}>
-            <SegmentSection label="SELECT" fill={true}>
+      <div className={selectClass}>
+        <SegmentSection label="SELECT" fill={true}>
+          {columnValues.map((c, index) => (
+            <>
               <SelectColumn
                 columns={columns}
                 setColumn={setColumn}
@@ -106,10 +108,10 @@ export function BuilderView({query, datasource, onChange}: any) {
               <InlineLabel as="button" className="" width="auto" onClick={removeColumns}>
                 -
               </InlineLabel>
-            </SegmentSection>
-          </div>
-        )
-      })}
+            </>
+          ))}
+        </SegmentSection>
+      </div>
       <div className={selectClass}>
         <SegmentSection label="WHERE" fill={true}>
           <Input
@@ -126,7 +128,7 @@ export function BuilderView({query, datasource, onChange}: any) {
               setWhere(e.currentTarget.value)
             }}
             value={where}
-            width={30}
+            width={15}
           />
         </SegmentSection>
       </div>
@@ -146,7 +148,7 @@ export function BuilderView({query, datasource, onChange}: any) {
               setGroupBy(e.currentTarget.value)
             }}
             value={groupBy}
-            width={30}
+            width={15}
           />
         </SegmentSection>
       </div>
@@ -166,7 +168,7 @@ export function BuilderView({query, datasource, onChange}: any) {
               setOrderBy(e.currentTarget.value)
             }}
             value={orderBy}
-            width={30}
+            width={15}
           />
         </SegmentSection>
       </div>
@@ -186,7 +188,7 @@ export function BuilderView({query, datasource, onChange}: any) {
               setLimit(e.currentTarget.value)
             }}
             value={limit}
-            width={30}
+            width={15}
           />
         </SegmentSection>
       </div>

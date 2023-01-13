@@ -4,7 +4,7 @@ import {QueryEditorProps} from '@grafana/data'
 import {FlightSQLDataSource} from '../datasource'
 import {FlightSQLDataSourceOptions, SQLQuery} from '../types'
 
-import {QueryEditorRaw} from './RawEditor'
+import {QueryEditorRaw} from './QueryEditorRaw'
 import {LanguageCompletionProvider, getStandardSQLCompletionProvider} from '@grafana/experimental'
 import {formatSQL} from './sqlFormatter'
 import {BuilderView} from './BuilderView'

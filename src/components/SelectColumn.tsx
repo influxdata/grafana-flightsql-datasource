@@ -8,14 +8,12 @@ export const SelectColumn = ({columns, index, setColumn, column, formatCreateLab
     <Select
       options={columns}
       onChange={setColumn}
-      // isLoading={loadingColumn}
-      // disabled={!!errorColumn}
       key={index}
       value={column.value}
       allowCustomValue={true}
       autoFocus={true}
       formatCreateLabel={formatCreateLabel}
-      width={30}
+      width={15}
       placeholder=""
     />
   )
