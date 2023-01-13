@@ -21,12 +21,15 @@ export class FlightSQLDataSource extends DataSourceWithBackend<SQLQuery, FlightS
   //     rawQuery: getTemplateSrv().replace(query.rawQuery, scopedVars),
   //   };
   // }
+  getSQLInfo(): Promise<any> {
+    return this.getResource('/flightsql/sql-info')
+  }
 
   getTables(): Promise<any> {
-    return this.getResource('/get-tables')
+    return this.getResource('/flightsql/tables')
   }
 
   getColumns(table: string): Promise<any> {
-    return this.getResource(`/get-columns?table=${table}`)
+    return this.getResource(`/flightsql/columns?table=${table}`)
   }
 }
