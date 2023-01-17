@@ -1,22 +1,16 @@
 package flightsql
 
 import (
-	"fmt"
 	"runtime/debug"
 	"time"
 
 	"github.com/apache/arrow/go/v10/arrow"
 	"github.com/apache/arrow/go/v10/arrow/array"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 func newFrame(schema *arrow.Schema, sql string) *data.Frame {
-	log.DefaultLogger.Info(fmt.Sprintf(
-		"Schema: metadata=%v fields=%v",
-		schema.Metadata(),
-		schema.Fields(),
-	))
+	logInfof("Schema: metadata=%v fields=%v", schema.Metadata(), schema.Fields())
 
 	fields := schema.Fields()
 	df := &data.Frame{
@@ -78,7 +72,7 @@ func newFrame(schema *arrow.Schema, sql string) *data.Frame {
 func copyData(field *data.Field, col arrow.Array) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.DefaultLogger.Error("Panic", r, string(debug.Stack()))
+			logErrorf("Panic: %v", r, string(debug.Stack()))
 		}
 	}()
 

@@ -69,7 +69,7 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 // Dispose cleans up before we are reaped.
 func (d *FlightSQLDatasource) Dispose() {
 	if err := d.client.Close(); err != nil {
-		log.DefaultLogger.Error(err.Error())
+		logErrorf(err.Error())
 	}
 }
 
@@ -103,11 +103,19 @@ func recoverer(next http.Handler) http.Handler {
 				if rec == http.ErrAbortHandler {
 					panic(rec)
 				}
-				log.DefaultLogger.Error("Panic:", string(debug.Stack()))
+				logErrorf("Panic: %v %v", r, string(debug.Stack()))
 				w.WriteHeader(http.StatusInternalServerError)
 			}
 		}()
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)
+}
+
+func logInfof(format string, v ...any) {
+	log.DefaultLogger.Info(fmt.Sprintf(format, v...))
+}
+
+func logErrorf(format string, v ...any) {
+	log.DefaultLogger.Error(fmt.Sprintf(format, v...))
 }
