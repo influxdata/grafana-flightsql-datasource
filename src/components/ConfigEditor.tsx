@@ -1,5 +1,5 @@
 import React, {ChangeEvent, useEffect, useState} from 'react'
-import {InlineSwitch, FieldSet, InlineField, SecretInput, Input, Select} from '@grafana/ui'
+import {InlineSwitch, FieldSet, InlineField, SecretInput, Input, Select, InlineFieldRow} from '@grafana/ui'
 import {DataSourcePluginOptionsEditorProps, SelectableValue} from '@grafana/data'
 import {FlightSQLDataSourceOptions} from '../types'
 
@@ -67,7 +67,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
     const {onOptionsChange, options} = props
     const jsonData = {
       ...options.jsonData,
-      selectedAuthType: selectedAuthType?.value,
+      selectedAuthType: selectedAuthType?.label,
     }
     onOptionsChange({...options, jsonData})
   }
@@ -142,7 +142,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
           </InlineField>
         )}
         {selectedAuthType?.label === 'username/password' && (
-          <>
+          <InlineFieldRow>
             <InlineField labelWidth={20} label="Username">
               <Input
                 width={40}
@@ -165,7 +165,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
                 isConfigured={false}
               ></SecretInput>
             </InlineField>
-          </>
+          </InlineFieldRow>
         )}
 
         <InlineField labelWidth={20} label="Require TLS / SSL">
