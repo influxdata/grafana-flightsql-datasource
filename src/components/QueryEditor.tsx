@@ -51,10 +51,6 @@ export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider
 export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuery, FlightSQLDataSourceOptions>) {
   const {onChange, query, datasource} = props
 
-  const onQueryRawSQLChange = (q: SQLQuery) => {
-    onChange(q)
-  }
-
   const [builderView, setView] = useState(true)
 
   const getTables = useCallback(async () => {
@@ -96,7 +92,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
       ) : (
         <QueryEditorRaw
           query={query}
-          onChange={onQueryRawSQLChange}
+          onChange={onChange}
           editorLanguageDefinition={{
             ...sqlLanguageDefinition,
             completionProvider,

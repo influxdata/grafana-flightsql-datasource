@@ -1,7 +1,7 @@
 import {css} from '@emotion/css'
 import React, {useMemo} from 'react'
 
-import {HorizontalGroup, IconButton, useTheme2} from '@grafana/ui'
+import {HorizontalGroup, IconButton, useTheme2, Tooltip, Icon} from '@grafana/ui'
 
 interface QueryToolProps {
   showTools?: boolean
@@ -65,6 +65,9 @@ export function QueryTool({showTools, onFormatCode, onExpand, isExpanded}: Query
                 tooltip={isExpanded ? 'Collapse editor' : 'Expand editor'}
               />
             )}
+            <Tooltip content="Hit CMD+Return to run query">
+              <Icon className="hint" name="keyboard" />
+            </Tooltip>
           </HorizontalGroup>
         </div>
       )}
