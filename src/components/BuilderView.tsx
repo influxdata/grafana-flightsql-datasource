@@ -134,12 +134,15 @@ export function BuilderView({query, datasource, onChange}: any) {
                 column={c.value}
                 formatCreateLabel={formatCreateLabel}
               />
+
               <InlineLabel as="button" className="" onClick={addColumns} width="auto">
                 +
               </InlineLabel>
-              <InlineLabel as="button" className="" width="auto" onClick={removeColumns}>
-                -
-              </InlineLabel>
+              {index > 0 && (
+                <InlineLabel as="button" className="" width="auto" onClick={removeColumns}>
+                  -
+                </InlineLabel>
+              )}
             </>
           ))}
         </SegmentSection>
@@ -158,9 +161,11 @@ export function BuilderView({query, datasource, onChange}: any) {
               <InlineLabel as="button" className="" onClick={addWheres} width="auto">
                 +
               </InlineLabel>
-              <InlineLabel as="button" className="" width="auto" onClick={removeWheres}>
-                -
-              </InlineLabel>
+              {index > 0 && (
+                <InlineLabel as="button" className="" width="auto" onClick={removeWheres}>
+                  -
+                </InlineLabel>
+              )}
             </>
           ))}
         </SegmentSection>
