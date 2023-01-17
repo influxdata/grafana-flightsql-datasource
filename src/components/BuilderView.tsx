@@ -77,7 +77,10 @@ export function BuilderView({query, datasource, onChange}: any) {
         .join(',')
         .replace(/,\s*$/, '')
       const t = checkCasing(table.value || '')
-      const whereExps = whereValues.map((w) => w.value).join(' and ')
+      const whereExps = whereValues
+        .map((w) => w.value)
+        .filter(Boolean)
+        .join(' and ')
       const queryText = buildQueryString(selectColumns, t, whereExps, orderBy, groupBy, limit)
       onChange({...query, queryText: queryText})
     }
