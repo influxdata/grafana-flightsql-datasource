@@ -68,20 +68,24 @@ func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.Dat
 		//
 		// https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#wide-format
 		// https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#long-format
-		hasTimeField := func() bool {
-			timeFields, _ := schema.FieldsByName("time")
-			if len(timeFields) > 0 && timeFields[0].Type.ID() == arrow.TIMESTAMP {
-				return true
+		var (
+			hasTimeField   bool
+			hasStringField bool
+		)
+		for _, f := range schema.Fields() {
+			if f.Name == "time" && f.Type.ID() == arrow.TIMESTAMP {
+				hasTimeField = true
+			} else if f.Type.ID() == arrow.STRING {
+				hasStringField = true
 			}
-			return false
-		}()
+		}
 
 		frame := newFrame(schema, sql)
 		for i, col := range record.Columns() {
 			copyData(frame.Fields[i], col)
 		}
 
-		if hasTimeField {
+		if hasTimeField && hasStringField {
 			// Convert the long format we received into wide, because we're
 			// pretty sure this is time-series data. This will produce a table
 			// that contains columns for each distinct label pair for a matching
