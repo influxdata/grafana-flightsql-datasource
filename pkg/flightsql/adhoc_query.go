@@ -53,21 +53,32 @@ func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.Dat
 	}
 	defer reader.Release()
 
-	// We've implemented our own conversions from Arrow to Data Frame, because
-	// the Arrow dependency bundled with Grafana SDK is ancient. If we were to
-	// use their functions, we'd end up writing the same amount of conversion
-	// code to adapt the APIs.
+	return newQueryDataResponse(reader, sql)
+}
+
+type flightReader interface {
+	Next() bool
+	Record() arrow.Record
+	Err() error
+}
+
+// newQueryDataResponse builds a DataResponse from a stream of Arrow data. The
+// DataResponse is divided into multiple Frames.
+//
+// If the data contains a `time` column of type `timestamp` and at least one
+// column of type `string`, the resulting table will be converted to wide
+// format.
+//
+// Data Frame Formatting Reference:
+// - https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#wide-format
+// - https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#long-format
+func newQueryDataResponse(reader flightReader, sql string) backend.DataResponse {
 	var resp backend.DataResponse
+
 	for reader.Next() {
 		record := reader.Record()
 		schema := record.Schema()
 
-		// Detect whether or not we should convert this Frame into the wide
-		// format for time-series. For now this is pretty simplistic. We should
-		// consider improving this in the future by reading column metadata.
-		//
-		// https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#wide-format
-		// https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#long-format
 		var (
 			hasTimeField   bool
 			hasStringField bool
@@ -84,12 +95,7 @@ func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.Dat
 		for i, col := range record.Columns() {
 			copyData(frame.Fields[i], col)
 		}
-
 		if hasTimeField && hasStringField {
-			// Convert the long format we received into wide, because we're
-			// pretty sure this is time-series data. This will produce a table
-			// that contains columns for each distinct label pair for a matching
-			// `time` value.
 			var err error
 			frame, err = data.LongToWide(frame, nil)
 			if err != nil {
@@ -97,7 +103,6 @@ func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.Dat
 				break
 			}
 		}
-
 		resp.Frames = append(resp.Frames, frame)
 
 		if err := reader.Err(); err != nil && !errors.Is(err, io.EOF) {
