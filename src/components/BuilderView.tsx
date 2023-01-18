@@ -57,13 +57,6 @@ export function BuilderView({query, datasource, onChange}: any) {
 
   useEffect(() => {
     ;(async () => {
-      const res = await datasource.getSQLInfo()
-      console.log('res', res)
-    })()
-  }, [])
-
-  useEffect(() => {
-    ;(async () => {
       let res
       if (table?.value) {
         res = table?.value && (await datasource.getColumns(table?.value))

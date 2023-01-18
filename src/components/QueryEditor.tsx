@@ -1,7 +1,7 @@
 import React, {useState, useMemo, useCallback} from 'react'
 import {Button} from '@grafana/ui'
 import {QueryEditorProps} from '@grafana/data'
-import {FlightSQLDatasource} from '../datasource'
+import {FlightSQLDataSource} from '../datasource'
 import {FlightSQLDataSourceOptions, SQLQuery} from '../types'
 
 import {QueryEditorRaw} from './QueryEditorRaw'
@@ -39,7 +39,7 @@ export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider
     }
   }
 
-export function QueryEditor(props: QueryEditorProps<FlightSQLDatasource, SQLQuery, FlightSQLDataSourceOptions>) {
+export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuery, FlightSQLDataSourceOptions>) {
   const {onChange, query, datasource} = props
 
   const [builderView, setView] = useState(true)
