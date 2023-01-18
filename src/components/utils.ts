@@ -1,5 +1,5 @@
 import {useAsync} from 'react-use'
-import {FlightSQLDatasource} from '../Datasource'
+import {FlightSQLDatasource} from '../datasource'
 import {SelectableValue} from '@grafana/data'
 
 type AsyncTablesState = {
