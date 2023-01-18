@@ -1,11 +1,13 @@
 package flightsql
 
 import (
+	"encoding/json"
 	"runtime/debug"
 	"time"
 
 	"github.com/apache/arrow/go/v10/arrow"
 	"github.com/apache/arrow/go/v10/arrow/array"
+	"github.com/apache/arrow/go/v10/arrow/scalar"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -41,6 +43,14 @@ func newFrame(schema *arrow.Schema, sql string) *data.Frame {
 			}
 			var s []float64
 			df.Fields[i] = data.NewField(field.Name, nil, s)
+		case arrow.UINT32:
+			if field.Nullable {
+				var s []*uint32
+				df.Fields[i] = data.NewField(field.Name, nil, s)
+				continue
+			}
+			var s []uint32
+			df.Fields[i] = data.NewField(field.Name, nil, s)
 		case arrow.INT64:
 			if field.Nullable {
 				var s []*int64
@@ -65,13 +75,21 @@ func newFrame(schema *arrow.Schema, sql string) *data.Frame {
 			}
 			var s []time.Time
 			df.Fields[i] = data.NewField(field.Name, nil, s)
+		case arrow.DENSE_UNION:
+			if field.Nullable {
+				var s []*json.RawMessage
+				df.Fields[i] = data.NewField(field.Name, nil, s)
+				continue
+			}
+			var s []json.RawMessage
+			df.Fields[i] = data.NewField(field.Name, nil, s)
 		}
 	}
 	return df
 }
 
 // copyData copies the contents of an Arrow column into a Data Frame field.
-func copyData(field *data.Field, col arrow.Array) {
+func copyData(field *data.Field, col arrow.Array) error {
 	defer func() {
 		if r := recover(); r != nil {
 			logErrorf("Panic: %v %v", r, string(debug.Stack()))
@@ -85,6 +103,21 @@ func copyData(field *data.Field, col arrow.Array) {
 			if field.Nullable() {
 				if v.IsNull(i) {
 					var s *string
+					field.Append(s)
+					continue
+				}
+				s := v.Value(i)
+				field.Append(&s)
+				continue
+			}
+			field.Append(v.Value(i))
+		}
+	case arrow.UINT32:
+		v := array.NewUint32Data(col.Data())
+		for i := 0; i < col.Len(); i++ {
+			if field.Nullable() {
+				if v.IsNull(i) {
+					var s *uint32
 					field.Append(s)
 					continue
 				}
@@ -154,5 +187,33 @@ func copyData(field *data.Field, col arrow.Array) {
 			}
 			field.Append(v.Value(i).ToTime(arrow.Nanosecond))
 		}
+	case arrow.DENSE_UNION:
+		v := array.NewDenseUnionData(col.Data())
+		for i := 0; i < col.Len(); i++ {
+			sc, err := scalar.GetScalar(v, i)
+			if err != nil {
+				return err
+			}
+			value := sc.(*scalar.DenseUnion).ChildValue()
+
+			var data any
+			switch value.DataType().ID() {
+			case arrow.STRING:
+				data = value.(*scalar.String).String()
+			case arrow.BOOL:
+				data = value.(*scalar.Boolean).Value
+			case arrow.INT32:
+				data = value.(*scalar.Int32).Value
+			case arrow.INT64:
+				data = value.(*scalar.Int64).Value
+			}
+			b, err := json.Marshal(data)
+			if err != nil {
+				return err
+			}
+			field.Append(json.RawMessage(b))
+		}
 	}
+
+	return nil
 }

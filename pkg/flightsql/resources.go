@@ -123,10 +123,14 @@ func (d *FlightSQLDatasource) getColumns(w http.ResponseWriter, r *http.Request)
 func newDataResponse(reader *flight.Reader) backend.DataResponse {
 	var resp backend.DataResponse
 	frame := newFrame(reader.Schema(), "")
+READER:
 	for reader.Next() {
 		record := reader.Record()
 		for i, col := range record.Columns() {
-			copyData(frame.Fields[i], col)
+			if err := copyData(frame.Fields[i], col); err != nil {
+				resp.Error = err
+				break READER
+			}
 		}
 		if err := reader.Err(); err != nil && !errors.Is(err, io.EOF) {
 			resp.Error = err
