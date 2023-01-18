@@ -2,7 +2,7 @@ import React from 'react'
 
 import {Input} from '@grafana/ui'
 
-export const WhereExp = ({index, onChange, whereValue, setWhere}: any) => (
+export const WhereExp = ({index, setWhere, whereValues}: any) => (
   <Input
     autoFocus
     type="text"
@@ -10,13 +10,13 @@ export const WhereExp = ({index, onChange, whereValue, setWhere}: any) => (
     onBlur={() => {}}
     onKeyDown={(e: any) => {
       if (e.key === 'Enter') {
-        onChange(whereValue)
+        setWhere({value: whereValues[index].value, index: index})
       }
     }}
     onChange={(e: any) => {
       setWhere({value: e.currentTarget.value, index: index})
     }}
-    value={whereValue}
+    value={whereValues[index].value}
     width={15}
     placeholder="value = value"
   />

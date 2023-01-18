@@ -77,7 +77,10 @@ export function BuilderView({query, datasource, onChange}: any) {
         .join(',')
         .replace(/,\s*$/, '')
       const t = checkCasing(table.value || '')
-      const whereExps = whereValues.map((w) => w.value).join(' and ')
+      const whereExps = whereValues
+        .map((w) => w.value)
+        .filter(Boolean)
+        .join(' and ')
       const queryText = buildQueryString(selectColumns, t, whereExps, orderBy, groupBy, limit)
       onChange({...query, queryText: queryText})
     }
@@ -131,33 +134,36 @@ export function BuilderView({query, datasource, onChange}: any) {
                 column={c.value}
                 formatCreateLabel={formatCreateLabel}
               />
-              <InlineLabel as="button" className="" onClick={addColumns} width="auto">
-                +
-              </InlineLabel>
-              <InlineLabel as="button" className="" width="auto" onClick={removeColumns}>
-                -
-              </InlineLabel>
+              {index + 1 >= columnValues.length && (
+                <InlineLabel as="button" className="" onClick={addColumns} width="auto">
+                  +
+                </InlineLabel>
+              )}
+
+              {index > 0 && (
+                <InlineLabel as="button" className="" width="auto" onClick={() => removeColumns(index)}>
+                  -
+                </InlineLabel>
+              )}
             </>
           ))}
         </SegmentSection>
       </div>
       <div className={selectClass}>
         <SegmentSection label="WHERE" fill={true}>
-          {whereValues.map((w, index) => (
+          {whereValues.map((_, index) => (
             <>
-              <WhereExp
-                whereValues={whereValues}
-                index={index}
-                onChange={onChange}
-                value={w.value}
-                setWhere={setWhere}
-              />
-              <InlineLabel as="button" className="" onClick={addWheres} width="auto">
-                +
-              </InlineLabel>
-              <InlineLabel as="button" className="" width="auto" onClick={removeWheres}>
-                -
-              </InlineLabel>
+              <WhereExp index={index} setWhere={setWhere} whereValues={whereValues} />
+              {index + 1 >= whereValues.length && (
+                <InlineLabel as="button" className="" onClick={addWheres} width="auto">
+                  +
+                </InlineLabel>
+              )}
+              {index > 0 && (
+                <InlineLabel as="button" className="" width="auto" onClick={() => removeWheres(index)}>
+                  -
+                </InlineLabel>
+              )}
             </>
           ))}
         </SegmentSection>

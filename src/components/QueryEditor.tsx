@@ -1,19 +1,13 @@
 import React, {useState, useMemo, useCallback} from 'react'
 import {Button} from '@grafana/ui'
 import {QueryEditorProps} from '@grafana/data'
-import {FlightSQLDatasource} from '../datasource'
+import {FlightSQLDataSource} from '../datasource'
 import {FlightSQLDataSourceOptions, SQLQuery} from '../types'
 
 import {QueryEditorRaw} from './QueryEditorRaw'
 import {LanguageCompletionProvider, getStandardSQLCompletionProvider} from '@grafana/experimental'
 import {formatSQL} from './sqlFormatter'
 import {BuilderView} from './BuilderView'
-
-// interface CompletionProviderGetterArgs {
-//   // getSchemas: () => Promise<any[]>;
-//   getTables: () => Promise<any[]>;
-//   getColumns: (table?: string) => Promise<any[]>;
-// }
 
 /// todo: make custom for FlightSQL
 // keywords?: string[];
@@ -38,9 +32,6 @@ export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider
           return getTables()
         },
       },
-      // how would this be implemented in this view
-      // as the table selection
-      // comes after the column selection
       columns: {
         resolve: (t: string) => getColumns(t),
       },
@@ -48,7 +39,7 @@ export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider
     }
   }
 
-export function QueryEditor(props: QueryEditorProps<FlightSQLDatasource, SQLQuery, FlightSQLDataSourceOptions>) {
+export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuery, FlightSQLDataSourceOptions>) {
   const {onChange, query, datasource} = props
 
   const [builderView, setView] = useState(true)
