@@ -75,6 +75,7 @@ type flightReader interface {
 func newQueryDataResponse(reader flightReader, sql string) backend.DataResponse {
 	var resp backend.DataResponse
 
+READER:
 	for reader.Next() {
 		record := reader.Record()
 		schema := record.Schema()
@@ -93,7 +94,10 @@ func newQueryDataResponse(reader flightReader, sql string) backend.DataResponse 
 
 		frame := newFrame(schema, sql)
 		for i, col := range record.Columns() {
-			copyData(frame.Fields[i], col)
+			if err := copyData(frame.Fields[i], col); err != nil {
+				resp.Error = err
+				break READER
+			}
 		}
 		if hasTimeField && hasStringField {
 			var err error
