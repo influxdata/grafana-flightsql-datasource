@@ -73,7 +73,7 @@ export function BuilderView({query, datasource, onChange}: any) {
   useEffect(() => {
     if (table && column) {
       const selectColumns = columnValues
-        .map((v) => v.value)
+        .map((v) => checkCasing(v.value))
         .join(',')
         .replace(/,\s*$/, '')
       const t = checkCasing(table.value || '')
