@@ -125,13 +125,13 @@ export function BuilderView({query, datasource, onChange}: any) {
       </div>
       <div className={selectClass}>
         <SegmentSection label="SELECT" fill={true}>
-          {columnValues.map((c, index) => (
+          {columnValues.map((_, index) => (
             <>
               <SelectColumn
                 columns={columns}
                 setColumn={setColumn}
                 index={index}
-                column={c.value}
+                columnValues={columnValues}
                 formatCreateLabel={formatCreateLabel}
               />
               {index + 1 >= columnValues.length && (
