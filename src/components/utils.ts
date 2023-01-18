@@ -1,5 +1,5 @@
 import {useAsync} from 'react-use'
-import {FlightSQLDataSource} from '../datasource'
+import {FlightSQLDatasource} from '../Datasource'
 import {SelectableValue} from '@grafana/data'
 
 type AsyncTablesState = {
@@ -8,7 +8,7 @@ type AsyncTablesState = {
   errorTable: Error | undefined
 }
 
-export const GetTables = (datasource: FlightSQLDataSource): AsyncTablesState => {
+export const GetTables = (datasource: FlightSQLDatasource): AsyncTablesState => {
   const result = useAsync(async () => {
     const res = await datasource.getTables()
     return res.frames[0].data.values[2].map((t: string) => ({
