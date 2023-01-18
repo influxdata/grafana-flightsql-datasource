@@ -60,7 +60,6 @@ export function BuilderView({query, datasource, onChange}: any) {
       let res
       if (table?.value) {
         res = table?.value && (await datasource.getColumns(table?.value))
-        console.log('res', res)
       }
       const columns = res?.frames[0].schema.fields.map((t: any) => ({
         index: '',
