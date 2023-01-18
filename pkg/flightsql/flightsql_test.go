@@ -2,27 +2,81 @@ package flightsql
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
+	"github.com/apache/arrow/go/v10/arrow/flight"
+	"github.com/apache/arrow/go/v10/arrow/flight/flightsql"
+	"github.com/apache/arrow/go/v10/arrow/flight/flightsql/example"
+	"github.com/apache/arrow/go/v10/arrow/memory"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestQueryData(t *testing.T) {
-	ds := FlightSQLDatasource{}
+	sqliteServer, err := example.NewSQLiteFlightSQLServer()
+	require.NoError(t, err)
+	sqliteServer.Alloc = memory.NewCheckedAllocator(memory.DefaultAllocator)
+	server := flight.NewServerWithMiddleware(nil)
+	server.RegisterFlightService(flightsql.NewFlightServer(sqliteServer))
+	err = server.Init("localhost:0")
+	require.NoError(t, err)
+	go server.Serve()
+	defer server.Shutdown()
 
-	resp, err := ds.QueryData(
-		context.Background(),
+	cfg := config{
+		Host:   server.Addr().String(),
+		Token:  "secret",
+		Secure: false,
+	}
+	cfgJSON, err := json.Marshal(cfg)
+	require.NoError(t, err)
+
+	settings := backend.DataSourceInstanceSettings{JSONData: cfgJSON}
+	ds, err := NewDatasource(settings)
+	require.NoError(t, err)
+	datasource := ds.(*FlightSQLDatasource)
+
+	resp, err := datasource.QueryData(context.Background(),
 		&backend.QueryDataRequest{
 			Queries: []backend.DataQuery{
-				{RefID: "A"},
+				{
+					RefID: "A",
+					JSON:  mustQueryJSON(t, "A", "select * from intTable"),
+				},
+				{
+					RefID: "B",
+					JSON:  mustQueryJSON(t, "B", "select 1"),
+				},
 			},
 		},
 	)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
+	require.Len(t, resp.Responses, 2)
 
-	if len(resp.Responses) != 1 {
-		t.Fatal("QueryData must return a response")
+	respA := resp.Responses["A"]
+	require.NoError(t, respA.Error)
+	frame := respA.Frames[0]
+
+	require.Equal(t, "id", frame.Fields[0].Name)
+	require.Equal(t, "keyName", frame.Fields[1].Name)
+	require.Equal(t, "value", frame.Fields[2].Name)
+	require.Equal(t, "foreignId", frame.Fields[3].Name)
+	for _, f := range frame.Fields {
+		assert.Equal(t, 4, f.Len())
 	}
+}
+
+func mustQueryJSON(t *testing.T, refID, sql string) []byte {
+	t.Helper()
+
+	b, err := json.Marshal(queryRequest{
+		RefID: refID,
+		Text:  sql,
+	})
+	if err != nil {
+		panic(err)
+	}
+	return b
 }

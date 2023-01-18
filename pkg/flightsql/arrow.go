@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+// newFrame builds a new Data Frame from an Arrow Schema.
 func newFrame(schema *arrow.Schema, sql string) *data.Frame {
 	logInfof("Schema: metadata=%v fields=%v", schema.Metadata(), schema.Fields())
 
@@ -69,10 +70,11 @@ func newFrame(schema *arrow.Schema, sql string) *data.Frame {
 	return df
 }
 
+// copyData copies the contents of an Arrow column into a Data Frame field.
 func copyData(field *data.Field, col arrow.Array) {
 	defer func() {
 		if r := recover(); r != nil {
-			logErrorf("Panic: %v", r, string(debug.Stack()))
+			logErrorf("Panic: %v %v", r, string(debug.Stack()))
 		}
 	}()
 
@@ -99,6 +101,7 @@ func copyData(field *data.Field, col arrow.Array) {
 				if v.IsNull(i) {
 					var s *int64
 					field.Append(s)
+					continue
 				}
 				s := v.Value(i)
 				field.Append(&s)

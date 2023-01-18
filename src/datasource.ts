@@ -5,7 +5,7 @@ import {SQLQuery, FlightSQLDataSourceOptions, DEFAULT_QUERY} from './types'
 
 // import { getBackendSrv } from "@grafana/runtime"
 
-export class FlightSQLDataSource extends DataSourceWithBackend<SQLQuery, FlightSQLDataSourceOptions> {
+export class FlightSQLDatasource extends DataSourceWithBackend<SQLQuery, FlightSQLDataSourceOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<FlightSQLDataSourceOptions>) {
     super(instanceSettings)
   }

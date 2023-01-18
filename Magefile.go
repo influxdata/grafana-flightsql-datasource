@@ -9,12 +9,12 @@ import (
 	"github.com/magefile/mage/mg"
 )
 
-// BuildAll is copied from Grafana's SDK (build package), because the Arrow
-// dependency doesn't support Linux ARM in the build matrix. I've removed it
-// from the listing here.
-func BuildIt() {
+// Build is copied from Grafana's SDK (build package), because the
+// Arrow dependency doesn't support Linux ARM in the build matrix. I've removed
+// it from the listing here.
+func Build() {
 	b := build.Build{}
 	mg.Deps(b.Linux, b.Windows, b.Darwin, b.DarwinARM64, b.LinuxARM64)
 }
 
-var Default = BuildIt
+var Default = Build
