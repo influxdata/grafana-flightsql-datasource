@@ -9,12 +9,6 @@ import {LanguageCompletionProvider, getStandardSQLCompletionProvider} from '@gra
 import {formatSQL} from './sqlFormatter'
 import {BuilderView} from './BuilderView'
 
-// interface CompletionProviderGetterArgs {
-//   // getSchemas: () => Promise<any[]>;
-//   getTables: () => Promise<any[]>;
-//   getColumns: (table?: string) => Promise<any[]>;
-// }
-
 /// todo: make custom for FlightSQL
 // keywords?: string[];
 // builtinFunctions?: string[];
@@ -38,9 +32,6 @@ export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider
           return getTables()
         },
       },
-      // how would this be implemented in this view
-      // as the table selection
-      // comes after the column selection
       columns: {
         resolve: (t: string) => getColumns(t),
       },

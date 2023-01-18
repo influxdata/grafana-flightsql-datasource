@@ -57,9 +57,17 @@ export function BuilderView({query, datasource, onChange}: any) {
 
   useEffect(() => {
     ;(async () => {
+      const res = await datasource.getSQLInfo()
+      console.log('res', res)
+    })()
+  }, [])
+
+  useEffect(() => {
+    ;(async () => {
       let res
       if (table?.value) {
         res = table?.value && (await datasource.getColumns(table?.value))
+        console.log('res', res)
       }
       const columns = res?.frames[0].schema.fields.map((t: any) => ({
         index: '',
@@ -134,12 +142,14 @@ export function BuilderView({query, datasource, onChange}: any) {
                 column={c.value}
                 formatCreateLabel={formatCreateLabel}
               />
+              {index + 1 >= columnValues.length && (
+                <InlineLabel as="button" className="" onClick={addColumns} width="auto">
+                  +
+                </InlineLabel>
+              )}
 
-              <InlineLabel as="button" className="" onClick={addColumns} width="auto">
-                +
-              </InlineLabel>
               {index > 0 && (
-                <InlineLabel as="button" className="" width="auto" onClick={removeColumns}>
+                <InlineLabel as="button" className="" width="auto" onClick={() => removeColumns(index)}>
                   -
                 </InlineLabel>
               )}
@@ -149,20 +159,16 @@ export function BuilderView({query, datasource, onChange}: any) {
       </div>
       <div className={selectClass}>
         <SegmentSection label="WHERE" fill={true}>
-          {whereValues.map((w, index) => (
+          {whereValues.map((_, index) => (
             <>
-              <WhereExp
-                whereValues={whereValues}
-                index={index}
-                onChange={onChange}
-                value={w.value}
-                setWhere={setWhere}
-              />
-              <InlineLabel as="button" className="" onClick={addWheres} width="auto">
-                +
-              </InlineLabel>
+              <WhereExp index={index} setWhere={setWhere} whereValues={whereValues} />
+              {index + 1 >= whereValues.length && (
+                <InlineLabel as="button" className="" onClick={addWheres} width="auto">
+                  +
+                </InlineLabel>
+              )}
               {index > 0 && (
-                <InlineLabel as="button" className="" width="auto" onClick={removeWheres}>
+                <InlineLabel as="button" className="" width="auto" onClick={() => removeWheres(index)}>
                   -
                 </InlineLabel>
               )}
