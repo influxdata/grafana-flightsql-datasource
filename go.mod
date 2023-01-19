@@ -6,7 +6,7 @@ require (
 	github.com/apache/arrow/go/v10 v10.0.1
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/google/go-cmp v0.5.9
-	github.com/grafana/grafana-plugin-sdk-go v0.147.0
+	github.com/grafana/grafana-plugin-sdk-go v0.147.1-0.20230118172923-498f672537c3
 	github.com/magefile/mage v1.14.0
 	github.com/stretchr/testify v1.8.1
 	google.golang.org/grpc v1.49.0

@@ -2,9 +2,11 @@ package flightsql
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/apache/arrow/go/v10/arrow/array"
@@ -12,8 +14,36 @@ import (
 	"github.com/apache/arrow/go/v10/arrow/flight/flightsql"
 	"github.com/apache/arrow/go/v10/arrow/memory"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"google.golang.org/grpc/metadata"
 )
+
+func (d *FlightSQLDatasource) getMacros(w http.ResponseWriter, r *http.Request) {
+	size := len(sqlutil.DefaultMacros) + len(macros)
+	names := make([]string, 0, size)
+	for k := range sqlutil.DefaultMacros {
+		if k == "table" || k == "column" {
+			// We don't have the information available for these to function
+			// propperly so omit them from advertisement.
+			continue
+		}
+		names = append(names, k)
+	}
+	for k := range macros {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+
+	err := json.NewEncoder(w).Encode(struct {
+		Macros []string `json:"macros"`
+	}{
+		Macros: names,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
 
 func (d *FlightSQLDatasource) getSQLInfo(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
