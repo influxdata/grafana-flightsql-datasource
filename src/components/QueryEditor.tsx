@@ -1,5 +1,5 @@
 import React, {useState, useMemo, useCallback} from 'react'
-import {Button} from '@grafana/ui'
+import {Button, Modal} from '@grafana/ui'
 import {QueryEditorProps} from '@grafana/data'
 import {FlightSQLDataSource} from '../datasource'
 import {FlightSQLDataSourceOptions, SQLQuery} from '../types'
@@ -9,13 +9,6 @@ import {LanguageCompletionProvider, getStandardSQLCompletionProvider} from '@gra
 import {formatSQL} from './sqlFormatter'
 import {BuilderView} from './BuilderView'
 
-/// todo: make custom for FlightSQL
-// keywords?: string[];
-// builtinFunctions?: string[];
-// logicalOperators?: string[];
-// comparisonOperators?: string[];
-// operators?: string[];
-
 export const COMMON_AGGREGATE_FNS = ['AVG', 'COUNT', 'MAX', 'MIN', 'SUM']
 export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider =
   ({getTables, getColumns}) =>
@@ -23,10 +16,6 @@ export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider
     return {
       ...(language && getStandardSQLCompletionProvider(monaco, {...language, builtinFunctions: COMMON_AGGREGATE_FNS})),
       triggerCharacters: ['.', ' ', '$', ',', '(', "'"],
-      // would this be useful
-      // schemas: {
-      //   resolve: getSchemas,
-      // },
       tables: {
         resolve: () => {
           return getTables()
@@ -41,6 +30,7 @@ export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider
 
 export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuery, FlightSQLDataSourceOptions>) {
   const {onChange, query, datasource} = props
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const [builderView, setView] = useState(true)
 
@@ -78,6 +68,37 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
 
   return (
     <>
+      {isExpanded && (
+        <Modal
+          title="Warning"
+          closeOnBackdropClick={false}
+          closeOnEscape={false}
+          isOpen={isExpanded}
+          onDismiss={() => {
+            setIsExpanded(false)
+          }}
+        >
+          {builderView
+            ? 'By switching to the raw sql editor if you click to come back to the builder view you will need to refill your query.'
+            : 'By switching to the builder view you will not bring your current raw query over to the builder editor, you will have to fill it out again.'}
+          <Modal.ButtonRow>
+            <Button fill="solid" size="md" variant="secondary" onClick={() => setIsExpanded(!isExpanded)}>
+              Back
+            </Button>
+            <Button
+              fill="solid"
+              size="md"
+              variant="destructive"
+              onClick={() => {
+                setIsExpanded(!isExpanded)
+                setView(!builderView)
+              }}
+            >
+              Switch
+            </Button>
+          </Modal.ButtonRow>
+        </Modal>
+      )}
       {builderView ? (
         <BuilderView query={props.query} datasource={datasource} onChange={onChange} />
       ) : (
@@ -90,7 +111,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
           }}
         />
       )}
-      <Button fill="outline" size="sm" onClick={() => setView(!builderView)}>
+      <Button fill="outline" size="sm" onClick={() => setIsExpanded(!isExpanded)}>
         {builderView ? 'Edit SQL' : 'Builder View'}
       </Button>
     </>
