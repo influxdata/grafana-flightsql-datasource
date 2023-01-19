@@ -49,7 +49,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
       const functions = [...numericFunctions, ...stringFunctions, ...systemFunctions, ...sqlDateTimeFunctions]
       setSqlInfo({...sqlInfo, keywords: keywords, builtinFunctions: functions})
     })()
-  }, [datasource, sqlInfo])
+  }, [datasource])
 
   useEffect(() => {
     ;(async () => {
