@@ -2,6 +2,7 @@ package flightsql
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 )
@@ -9,6 +10,21 @@ import (
 var macros = sqlutil.Macros{
 	"dateBin":      macroDateBin(""),
 	"dateBinAlias": macroDateBin("_binned"),
+	"interval":     macroInterval,
+	"from":         macroFrom,
+	"to":           macroTo,
+}
+
+func macroInterval(query *sqlutil.Query, _ []string) (string, error) {
+	return fmt.Sprintf("'%d second'", int64(query.Interval.Seconds())), nil
+}
+
+func macroFrom(query *sqlutil.Query, _ []string) (string, error) {
+	return query.TimeRange.From.Format(time.RFC3339), nil
+}
+
+func macroTo(query *sqlutil.Query, _ []string) (string, error) {
+	return query.TimeRange.To.Format(time.RFC3339), nil
 }
 
 func macroDateBin(suffix string) sqlutil.MacroFunc {
