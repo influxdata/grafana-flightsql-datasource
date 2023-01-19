@@ -5,13 +5,12 @@ import {FlightSQLDataSource} from '../datasource'
 import {FlightSQLDataSourceOptions, SQLQuery} from '../types'
 
 import {QueryEditorRaw} from './QueryEditorRaw'
-import {LanguageCompletionProvider, getStandardSQLCompletionProvider} from '@grafana/experimental'
+import {LanguageCompletionProvider, getStandardSQLCompletionProvider, MacroType} from '@grafana/experimental'
 import {formatSQL} from './sqlFormatter'
 import {BuilderView} from './BuilderView'
 
-export const COMMON_AGGREGATE_FNS = ['AVG', 'COUNT', 'MAX', 'MIN', 'SUM']
 export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider =
-  ({getTables, getColumns, sqlInfo}) =>
+  ({getTables, getColumns, sqlInfo, macros}) =>
   (monaco, language) => {
     return {
       ...(language &&
@@ -29,7 +28,7 @@ export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider
       columns: {
         resolve: (t: string) => getColumns(t),
       },
-      supportedMacros: () => [],
+      supportedMacros: () => macros,
     }
   }
 
@@ -37,6 +36,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   const {onChange, query, datasource} = props
   const [isExpanded, setIsExpanded] = useState(false)
   const [sqlInfo, setSqlInfo] = useState<any>()
+  const [macros, setMacros] = useState<any>()
 
   useEffect(() => {
     ;(async () => {
@@ -47,7 +47,17 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
       const systemFunctions = res?.frames[0].data.values[1][20]
       const sqlDateTimeFunctions = res?.frames[0].data.values[1][21]
       const functions = [...numericFunctions, ...stringFunctions, ...systemFunctions, ...sqlDateTimeFunctions]
-      setSqlInfo({keywords: keywords, builtinFunctions: functions})
+      setSqlInfo({...sqlInfo, keywords: keywords, builtinFunctions: functions})
+    })()
+  }, [datasource, sqlInfo])
+
+  useEffect(() => {
+    ;(async () => {
+      const res = await datasource.getMacros()
+      const prefix = `$__`
+      const macroArr = res?.macros.map((m: any) => prefix.concat(m))
+      const macros = macroArr.map((m: any) => ({text: m, name: m, id: m, type: MacroType.Value, args: []}))
+      setMacros(macros)
     })()
   }, [datasource])
 
@@ -77,8 +87,9 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
         getTables,
         getColumns,
         sqlInfo,
+        macros,
       }),
-    [getTables, getColumns, sqlInfo]
+    [getTables, getColumns, sqlInfo, macros]
   )
 
   const sqlLanguageDefinition = {
