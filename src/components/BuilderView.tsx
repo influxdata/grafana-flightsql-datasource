@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react'
 import {css} from '@emotion/css'
 
-import {Select, SegmentSection, InlineLabel, Input, Tooltip, Icon} from '@grafana/ui'
+import {Select, SegmentSection, InlineLabel, Input} from '@grafana/ui'
 import {SelectableValue} from '@grafana/data'
 import {GetTables, checkCasing, buildQueryString} from './utils'
 import {SelectColumn} from './SelectColumn'

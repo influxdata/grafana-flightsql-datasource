@@ -23,4 +23,8 @@ export class FlightSQLDataSource extends DataSourceWithBackend<SQLQuery, FlightS
   getColumns(table: string): Promise<any> {
     return this.getResource(`/flightsql/columns?table=${table}`)
   }
+
+  getMacros(): Promise<any> {
+    return this.getResource('/plugin/macros')
+  }
 }
