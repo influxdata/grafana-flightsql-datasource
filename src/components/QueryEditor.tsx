@@ -1,4 +1,4 @@
-import React, {useState, useMemo, useCallback} from 'react'
+import React, {useState, useMemo, useCallback, useEffect} from 'react'
 import {Button, Modal} from '@grafana/ui'
 import {QueryEditorProps} from '@grafana/data'
 import {FlightSQLDataSource} from '../datasource'
@@ -11,10 +11,15 @@ import {BuilderView} from './BuilderView'
 
 export const COMMON_AGGREGATE_FNS = ['AVG', 'COUNT', 'MAX', 'MIN', 'SUM']
 export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider =
-  ({getTables, getColumns}) =>
+  ({getTables, getColumns, sqlInfo}) =>
   (monaco, language) => {
     return {
-      ...(language && getStandardSQLCompletionProvider(monaco, {...language, builtinFunctions: COMMON_AGGREGATE_FNS})),
+      ...(language &&
+        getStandardSQLCompletionProvider(monaco, {
+          ...language,
+          builtinFunctions: sqlInfo.builtinFunctions,
+          keywords: sqlInfo.keywords,
+        })),
       triggerCharacters: ['.', ' ', '$', ',', '(', "'"],
       tables: {
         resolve: () => {
@@ -31,6 +36,20 @@ export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider
 export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuery, FlightSQLDataSourceOptions>) {
   const {onChange, query, datasource} = props
   const [isExpanded, setIsExpanded] = useState(false)
+  const [sqlInfo, setSqlInfo] = useState<any>()
+
+  useEffect(() => {
+    ;(async () => {
+      const res = await datasource.getSQLInfo()
+      const keywords = res?.frames[0].data.values[1][17]
+      const numericFunctions = res?.frames[0].data.values[1][18]
+      const stringFunctions = res?.frames[0].data.values[1][19]
+      const systemFunctions = res?.frames[0].data.values[1][20]
+      const sqlDateTimeFunctions = res?.frames[0].data.values[1][21]
+      const functions = [...numericFunctions, ...stringFunctions, ...systemFunctions, ...sqlDateTimeFunctions]
+      setSqlInfo({keywords: keywords, builtinFunctions: functions})
+    })()
+  }, [datasource])
 
   const [builderView, setView] = useState(true)
 
@@ -57,8 +76,9 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
       getSqlCompletionProvider({
         getTables,
         getColumns,
+        sqlInfo,
       }),
-    [getTables, getColumns]
+    [getTables, getColumns, sqlInfo]
   )
 
   const sqlLanguageDefinition = {
