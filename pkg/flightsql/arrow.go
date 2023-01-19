@@ -206,6 +206,8 @@ func copyData(field *data.Field, col arrow.Array) error {
 				data = value.(*scalar.Int32).Value
 			case arrow.INT64:
 				data = value.(*scalar.Int64).Value
+			case arrow.LIST:
+				data = value.(*scalar.List).Value
 			}
 			b, err := json.Marshal(data)
 			if err != nil {
