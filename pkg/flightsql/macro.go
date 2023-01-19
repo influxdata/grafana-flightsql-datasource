@@ -11,12 +11,10 @@ var macros = sqlutil.Macros{
 	"dateBin":      macroDateBin(""),
 	"dateBinAlias": macroDateBin("_binned"),
 	"interval":     macroInterval,
-	"from":         macroFrom,
-	"to":           macroTo,
 }
 
 func macroInterval(query *sqlutil.Query, _ []string) (string, error) {
-	return fmt.Sprintf("'%d second'", int64(query.Interval.Seconds())), nil
+	return fmt.Sprintf("interval '%d second'", int64(query.Interval.Seconds())), nil
 }
 
 func macroFrom(query *sqlutil.Query, _ []string) (string, error) {
