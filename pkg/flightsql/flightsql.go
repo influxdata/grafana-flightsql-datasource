@@ -56,6 +56,9 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 	}
 	r := chi.NewRouter()
 	r.Use(recoverer)
+	r.Route("/plugin", func(r chi.Router) {
+		r.Get("/macros", ds.getMacros)
+	})
 	r.Route("/flightsql", func(r chi.Router) {
 		r.Get("/sql-info", ds.getSQLInfo)
 		r.Get("/tables", ds.getTables)

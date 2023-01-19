@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/apache/arrow/go/v10/arrow"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -17,12 +19,32 @@ import (
 func (d *FlightSQLDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 	for _, qreq := range req.Queries {
+		// The shape of the payload we're parsing from backend.DataQuery.JSON
+		// doesn't have the same fields as what sqlutil.Query expects to parse
+		// when using sqlutil.GetQuery. Parse it ourselves and create a
+		// sqlutil.Query value.
 		var q queryRequest
 		if err := json.Unmarshal(qreq.JSON, &q); err != nil {
 			response.Responses[qreq.RefID] = backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("unmarshal query request: %s", err))
 			continue
 		}
-		response.Responses[qreq.RefID] = d.query(ctx, q.Text)
+		query := &sqlutil.Query{
+			RawSQL:        q.Text,
+			RefID:         q.RefID,
+			MaxDataPoints: q.MaxDataPoints,
+			Interval:      time.Duration(q.IntervalMilliseconds) * time.Millisecond,
+			TimeRange:     qreq.TimeRange,
+			// There are other fields here that are worth looking into. Things
+			// seem to work just fine, but Format and FillMissing seem useful.
+		}
+
+		// Process macros and execute the query.
+		sql, err := sqlutil.Interpolate(query, macros)
+		if err != nil {
+			response.Responses[qreq.RefID] = backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("macro interpolation: %s", err))
+			continue
+		}
+		response.Responses[qreq.RefID] = d.query(ctx, sql)
 	}
 	return response, nil
 }
@@ -33,7 +55,7 @@ type queryRequest struct {
 	RefID                string `json:"refId"`
 	Text                 string `json:"queryText"`
 	IntervalMilliseconds int    `json:"intervalMs"`
-	MaxDataPoints        int    `json:"maxDataPoints"`
+	MaxDataPoints        int64  `json:"maxDataPoints"`
 }
 
 // query executes a SQL statement by issuing a `CommandStatementQuery` command to Flight SQL.
@@ -106,6 +128,8 @@ READER:
 				resp.Error = err
 				break
 			}
+			n, _ := frame.RowLen()
+			logInfof("FRAME ROWS: %v %v", frame.Rows(), n)
 		}
 		resp.Frames = append(resp.Frames, frame)
 
