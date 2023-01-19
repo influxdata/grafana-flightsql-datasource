@@ -50,7 +50,7 @@ jobs:
         uses: magefile/mage-action@v1
         with:
           version: latest
-          args: buildAll
+          args: build
 
       # - name: Warn missing Grafana API key
       #   run: |
