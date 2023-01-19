@@ -128,8 +128,6 @@ READER:
 				resp.Error = err
 				break
 			}
-			n, _ := frame.RowLen()
-			logInfof("FRAME ROWS: %v %v", frame.Rows(), n)
 		}
 		resp.Frames = append(resp.Frames, frame)
 
