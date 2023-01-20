@@ -15,6 +15,11 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+// TODO(brett): Make this configurable. This is an arbitrary value right
+// now. Grafana used to have a 1M row rowLimit established in open-source. I'll
+// let users hit that for now until we decide how to proceed.
+const rowLimit = 1_000_000
+
 // QueryData executes batches of ad-hoc queries and returns a batch of results.
 func (d *FlightSQLDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
@@ -80,6 +85,7 @@ func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.Dat
 
 type flightReader interface {
 	Next() bool
+	Schema() *arrow.Schema
 	Record() arrow.Record
 	Err() error
 }
@@ -97,44 +103,56 @@ type flightReader interface {
 func newQueryDataResponse(reader flightReader, sql string) backend.DataResponse {
 	var resp backend.DataResponse
 
+	var (
+		hasTimeField   bool
+		hasStringField bool
+		schema         = reader.Schema()
+	)
+	for _, f := range schema.Fields() {
+		if f.Name == "time" && f.Type.ID() == arrow.TIMESTAMP {
+			hasTimeField = true
+		} else if f.Type.ID() == arrow.STRING {
+			hasStringField = true
+		}
+	}
+
+	frame := newFrame(schema, sql)
+
+	var rows int64
 READER:
 	for reader.Next() {
 		record := reader.Record()
-		schema := record.Schema()
-
-		var (
-			hasTimeField   bool
-			hasStringField bool
-		)
-		for _, f := range schema.Fields() {
-			if f.Name == "time" && f.Type.ID() == arrow.TIMESTAMP {
-				hasTimeField = true
-			} else if f.Type.ID() == arrow.STRING {
-				hasStringField = true
-			}
-		}
-
-		frame := newFrame(schema, sql)
 		for i, col := range record.Columns() {
 			if err := copyData(frame.Fields[i], col); err != nil {
 				resp.Error = err
 				break READER
 			}
 		}
-		if hasTimeField && hasStringField {
-			var err error
-			frame, err = data.LongToWide(frame, nil)
-			if err != nil {
-				resp.Error = err
-				break
-			}
+
+		rows += record.NumRows()
+		if rows > rowLimit {
+			frame.AppendNotices(data.Notice{
+				Severity: data.NoticeSeverityWarning,
+				Text:     fmt.Sprintf("Results have been limited to %v because the SQL row limit was reached", rowLimit),
+			})
+			break READER
 		}
-		resp.Frames = append(resp.Frames, frame)
 
 		if err := reader.Err(); err != nil && !errors.Is(err, io.EOF) {
 			resp.Error = err
 			break
 		}
 	}
+
+	if hasTimeField && hasStringField {
+		var err error
+		frame, err = data.LongToWide(frame, nil)
+		if err != nil {
+			resp.Error = err
+			return resp
+		}
+	}
+
+	resp.Frames = append(resp.Frames, frame)
 	return resp
 }
