@@ -62,6 +62,11 @@ type queryRequest struct {
 func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.DataResponse {
 	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
 
+	// TODO(brett): Make this configurable. This is an arbitrary value right
+	// now. Grafana used to have a 1M row limit established in open-source. I'll
+	// let users hit that for now until we decide how to proceed.
+	const limit = 1_000_000
+
 	info, err := d.client.Execute(ctx, sql)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
@@ -75,11 +80,12 @@ func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.Dat
 	}
 	defer reader.Release()
 
-	return newQueryDataResponse(reader, sql)
+	return newQueryDataResponse(reader, sql, limit)
 }
 
 type flightReader interface {
 	Next() bool
+	Schema() *arrow.Schema
 	Record() arrow.Record
 	Err() error
 }
@@ -94,47 +100,59 @@ type flightReader interface {
 // Data Frame Formatting Reference:
 // - https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#wide-format
 // - https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#long-format
-func newQueryDataResponse(reader flightReader, sql string) backend.DataResponse {
+func newQueryDataResponse(reader flightReader, sql string, limit int64) backend.DataResponse {
 	var resp backend.DataResponse
 
+	var (
+		hasTimeField   bool
+		hasStringField bool
+		schema         = reader.Schema()
+	)
+	for _, f := range schema.Fields() {
+		if f.Name == "time" && f.Type.ID() == arrow.TIMESTAMP {
+			hasTimeField = true
+		} else if f.Type.ID() == arrow.STRING {
+			hasStringField = true
+		}
+	}
+
+	frame := newFrame(schema, sql)
+
+	var rows int64
 READER:
 	for reader.Next() {
 		record := reader.Record()
-		schema := record.Schema()
-
-		var (
-			hasTimeField   bool
-			hasStringField bool
-		)
-		for _, f := range schema.Fields() {
-			if f.Name == "time" && f.Type.ID() == arrow.TIMESTAMP {
-				hasTimeField = true
-			} else if f.Type.ID() == arrow.STRING {
-				hasStringField = true
-			}
-		}
-
-		frame := newFrame(schema, sql)
 		for i, col := range record.Columns() {
 			if err := copyData(frame.Fields[i], col); err != nil {
 				resp.Error = err
 				break READER
 			}
 		}
-		if hasTimeField && hasStringField {
-			var err error
-			frame, err = data.LongToWide(frame, nil)
-			if err != nil {
-				resp.Error = err
-				break
-			}
+
+		rows += record.NumRows()
+		if rows > limit {
+			frame.AppendNotices(data.Notice{
+				Severity: data.NoticeSeverityWarning,
+				Text:     fmt.Sprintf("Results have been limited to %v because the SQL row limit was reached", limit),
+			})
+			break READER
 		}
-		resp.Frames = append(resp.Frames, frame)
 
 		if err := reader.Err(); err != nil && !errors.Is(err, io.EOF) {
 			resp.Error = err
 			break
 		}
 	}
+
+	if hasTimeField && hasStringField {
+		var err error
+		frame, err = data.LongToWide(frame, nil)
+		if err != nil {
+			resp.Error = err
+			return resp
+		}
+	}
+
+	resp.Frames = append(resp.Frames, frame)
 	return resp
 }
