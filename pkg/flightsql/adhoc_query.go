@@ -15,6 +15,11 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+// TODO(brett): Make this configurable. This is an arbitrary value right
+// now. Grafana used to have a 1M row rowLimit established in open-source. I'll
+// let users hit that for now until we decide how to proceed.
+const rowLimit = 1_000_000
+
 // QueryData executes batches of ad-hoc queries and returns a batch of results.
 func (d *FlightSQLDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
@@ -62,11 +67,6 @@ type queryRequest struct {
 func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.DataResponse {
 	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
 
-	// TODO(brett): Make this configurable. This is an arbitrary value right
-	// now. Grafana used to have a 1M row limit established in open-source. I'll
-	// let users hit that for now until we decide how to proceed.
-	const limit = 1_000_000
-
 	info, err := d.client.Execute(ctx, sql)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
@@ -80,7 +80,7 @@ func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.Dat
 	}
 	defer reader.Release()
 
-	return newQueryDataResponse(reader, sql, limit)
+	return newQueryDataResponse(reader, sql)
 }
 
 type flightReader interface {
@@ -100,7 +100,7 @@ type flightReader interface {
 // Data Frame Formatting Reference:
 // - https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#wide-format
 // - https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#long-format
-func newQueryDataResponse(reader flightReader, sql string, limit int64) backend.DataResponse {
+func newQueryDataResponse(reader flightReader, sql string) backend.DataResponse {
 	var resp backend.DataResponse
 
 	var (
@@ -130,10 +130,10 @@ READER:
 		}
 
 		rows += record.NumRows()
-		if rows > limit {
+		if rows > rowLimit {
 			frame.AppendNotices(data.Notice{
 				Severity: data.NoticeSeverityWarning,
-				Text:     fmt.Sprintf("Results have been limited to %v because the SQL row limit was reached", limit),
+				Text:     fmt.Sprintf("Results have been limited to %v because the SQL row limit was reached", rowLimit),
 			})
 			break READER
 		}
