@@ -38,7 +38,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   const [sqlInfo, setSqlInfo] = useState<any>()
   const [macros, setMacros] = useState<any>()
 
-  useCallback(() => {
+  useEffect(() => {
     ;(async () => {
       const res = await datasource.getSQLInfo()
       const keywords = res?.frames[0].data.values[1][17]
