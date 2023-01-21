@@ -48,7 +48,7 @@ func (d *FlightSQLDatasource) getMacros(w http.ResponseWriter, r *http.Request) 
 func (d *FlightSQLDatasource) getSQLInfo(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
+	ctx = metadata.NewOutgoingContext(ctx, d.md)
 	info, err := d.client.GetSqlInfo(ctx, []flightsql.SqlInfo{})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -70,7 +70,7 @@ func (d *FlightSQLDatasource) getSQLInfo(w http.ResponseWriter, r *http.Request)
 func (d *FlightSQLDatasource) getTables(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
+	ctx = metadata.NewOutgoingContext(ctx, d.md)
 	info, err := d.client.GetTables(ctx, &flightsql.GetTablesOpts{
 		TableTypes: []string{"BASE TABLE"},
 	})
@@ -100,7 +100,7 @@ func (d *FlightSQLDatasource) getColumns(w http.ResponseWriter, r *http.Request)
 
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
+	ctx = metadata.NewOutgoingContext(ctx, d.md)
 	info, err := d.client.GetTables(ctx, &flightsql.GetTablesOpts{
 		TableNameFilterPattern: &tableName,
 		IncludeSchema:          true,
