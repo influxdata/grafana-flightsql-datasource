@@ -143,7 +143,7 @@ func (d *FlightSQLDatasource) getColumns(w http.ResponseWriter, r *http.Request)
 	}
 
 	var resp backend.DataResponse
-	resp.Frames = append(resp.Frames, newFrame(schema, ""))
+	resp.Frames = append(resp.Frames, newFrame(schema))
 	if err := writeDataResponse(w, resp); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -152,7 +152,7 @@ func (d *FlightSQLDatasource) getColumns(w http.ResponseWriter, r *http.Request)
 
 func newDataResponse(reader *flight.Reader) backend.DataResponse {
 	var resp backend.DataResponse
-	frame := newFrame(reader.Schema(), "")
+	frame := newFrame(reader.Schema())
 READER:
 	for reader.Next() {
 		record := reader.Record()
