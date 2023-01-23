@@ -48,7 +48,7 @@ func (d *FlightSQLDatasource) getMacros(w http.ResponseWriter, r *http.Request) 
 func (d *FlightSQLDatasource) getSQLInfo(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
+	ctx = metadata.NewOutgoingContext(ctx, d.md)
 	info, err := d.client.GetSqlInfo(ctx, []flightsql.SqlInfo{})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -70,7 +70,7 @@ func (d *FlightSQLDatasource) getSQLInfo(w http.ResponseWriter, r *http.Request)
 func (d *FlightSQLDatasource) getTables(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
+	ctx = metadata.NewOutgoingContext(ctx, d.md)
 	info, err := d.client.GetTables(ctx, &flightsql.GetTablesOpts{
 		TableTypes: []string{"BASE TABLE"},
 	})
@@ -100,7 +100,7 @@ func (d *FlightSQLDatasource) getColumns(w http.ResponseWriter, r *http.Request)
 
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
+	ctx = metadata.NewOutgoingContext(ctx, d.md)
 	info, err := d.client.GetTables(ctx, &flightsql.GetTablesOpts{
 		TableNameFilterPattern: &tableName,
 		IncludeSchema:          true,
@@ -143,7 +143,7 @@ func (d *FlightSQLDatasource) getColumns(w http.ResponseWriter, r *http.Request)
 	}
 
 	var resp backend.DataResponse
-	resp.Frames = append(resp.Frames, newFrame(schema, ""))
+	resp.Frames = append(resp.Frames, newFrame(schema))
 	if err := writeDataResponse(w, resp); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -152,7 +152,7 @@ func (d *FlightSQLDatasource) getColumns(w http.ResponseWriter, r *http.Request)
 
 func newDataResponse(reader *flight.Reader) backend.DataResponse {
 	var resp backend.DataResponse
-	frame := newFrame(reader.Schema(), "")
+	frame := newFrame(reader.Schema())
 READER:
 	for reader.Next() {
 		record := reader.Record()

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"strings"
 
 	"github.com/apache/arrow/go/v10/arrow/flight/flightsql"
 	"github.com/go-chi/chi/v5"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"google.golang.org/grpc/metadata"
 )
 
 var (
@@ -25,10 +27,31 @@ var (
 const mdBucketName = "bucket-name"
 
 type config struct {
-	Host     string `json:"host"`
-	Database string `json:"database"`
-	Token    string `json:"token"`
-	Secure   bool   `json:"secure"`
+	Addr     string            `json:"host"`
+	Database string            `json:"database"`
+	Metadata map[string]string `json:"metadata"`
+	Secure   bool              `json:"secure"`
+	Username string            `json:"username"`
+	Password string            `json:"password"`
+	Token    string            `json:"token"`
+}
+
+func (cfg config) validate() error {
+	if strings.Count(cfg.Addr, ":") == 0 {
+		return fmt.Errorf(`server address must be in the form "host:port"`)
+	}
+	if len(cfg.Database) == 0 {
+		return fmt.Errorf("database name is required")
+	}
+
+	noToken := len(cfg.Token) == 0
+	noUserPass := len(cfg.Username) == 0 || len(cfg.Password) == 0
+
+	if noToken && noUserPass {
+		return fmt.Errorf("token or username/password are required")
+	}
+
+	return nil
 }
 
 // FlightSQLDatasource is a Grafana datasource plugin for Flight SQL.
@@ -36,6 +59,7 @@ type FlightSQLDatasource struct {
 	database        string
 	client          *flightsql.Client
 	resourceHandler backend.CallResourceHandler
+	md              metadata.MD
 }
 
 // NewDatasource creates a new datasource instance.
@@ -45,14 +69,33 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 	if err != nil {
 		return nil, fmt.Errorf("config: %s", err)
 	}
+	if err := cfg.validate(); err != nil {
+		return nil, fmt.Errorf("config validation: %v", err)
+	}
+
 	client, err := newFlightSQLClient(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("flightsql: %s", err)
 	}
 
+	md := metadata.MD{}
+	md.Set(mdBucketName, cfg.Database)
+
+	ctx := context.Background()
+	if len(cfg.Username) > 0 || len(cfg.Password) > 0 {
+		ctx, err = client.Client.AuthenticateBasicToken(ctx, cfg.Username, cfg.Password)
+		if err != nil {
+			return nil, fmt.Errorf("flightsql: %s", err)
+		}
+		md, _ = metadata.FromOutgoingContext(ctx)
+	} else {
+		md.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Token))
+	}
+
 	ds := &FlightSQLDatasource{
 		database: cfg.Database,
 		client:   client,
+		md:       md,
 	}
 	r := chi.NewRouter()
 	r.Use(recoverer)

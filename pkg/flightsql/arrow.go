@@ -2,26 +2,112 @@ package flightsql
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
 	"runtime/debug"
 	"time"
 
 	"github.com/apache/arrow/go/v10/arrow"
 	"github.com/apache/arrow/go/v10/arrow/array"
 	"github.com/apache/arrow/go/v10/arrow/scalar"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// newFrame builds a new Data Frame from an Arrow Schema.
-func newFrame(schema *arrow.Schema, sql string) *data.Frame {
-	logInfof("Schema: metadata=%v fields=%v", schema.Metadata(), schema.Fields())
+// TODO(brett): Make this configurable. This is an arbitrary value right
+// now. Grafana used to have a 1M row rowLimit established in open-source. I'll
+// let users hit that for now until we decide how to proceed.
+const rowLimit = 1_000_000
 
+type recordReader interface {
+	Next() bool
+	Schema() *arrow.Schema
+	Record() arrow.Record
+	Err() error
+}
+
+// newQueryDataResponse builds a [backend.DataResponse] from a stream of
+// [arrow.Record]s.
+//
+// The backend.DataResponse contains a single [data.Frame].
+func newQueryDataResponse(reader recordReader, sql string) backend.DataResponse {
+	var resp backend.DataResponse
+	frame, err := frameForRecords(reader)
+	if err != nil {
+		resp.Error = err
+	}
+	frame.Meta.ExecutedQueryString = sql
+	frame.Meta.DataTopic = data.DataTopic(sql)
+
+	// If the data contains a `time` column of type `timestamp` and at least one
+	// column of type `string`, the resulting table will be converted to wide
+	// format.
+	//
+	// Data Frame Formatting Reference:
+	// - https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#wide-format
+	// - https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#long-format
+	var (
+		hasTimeField   bool
+		hasStringField bool
+		schema         = reader.Schema()
+	)
+	for _, f := range schema.Fields() {
+		if f.Name == "time" && f.Type.ID() == arrow.TIMESTAMP {
+			hasTimeField = true
+		} else if f.Type.ID() == arrow.STRING {
+			hasStringField = true
+		}
+	}
+	fmt.Println(hasTimeField, hasStringField)
+	if hasTimeField && hasStringField {
+		var err error
+		frame, err = data.LongToWide(frame, nil)
+		if err != nil {
+			resp.Error = err
+		}
+	}
+
+	resp.Frames = data.Frames{frame}
+	return resp
+}
+
+// frameForRecords creates a [data.Frame] from a stream of [arrow.Record]s.
+func frameForRecords(reader recordReader) (*data.Frame, error) {
+	var (
+		frame = newFrame(reader.Schema())
+		rows  int64
+	)
+	for reader.Next() {
+		record := reader.Record()
+		for i, col := range record.Columns() {
+			if err := copyData(frame.Fields[i], col); err != nil {
+				return frame, err
+			}
+		}
+
+		rows += record.NumRows()
+		if rows > rowLimit {
+			frame.AppendNotices(data.Notice{
+				Severity: data.NoticeSeverityWarning,
+				Text:     fmt.Sprintf("Results have been limited to %v because the SQL row limit was reached", rowLimit),
+			})
+			return frame, nil
+		}
+
+		if err := reader.Err(); err != nil && !errors.Is(err, io.EOF) {
+			return frame, err
+		}
+	}
+	return frame, nil
+}
+
+// newFrame builds a new Data Frame from an Arrow Schema.
+func newFrame(schema *arrow.Schema) *data.Frame {
 	fields := schema.Fields()
 	df := &data.Frame{
 		Fields: make([]*data.Field, len(fields)),
-		Meta: &data.FrameMeta{
-			ExecutedQueryString: sql,
-			DataTopic:           data.DataTopic(sql),
-		},
+		Meta:   &data.FrameMeta{},
 	}
 	nullable := make([]bool, len(fields))
 	for i, field := range fields {

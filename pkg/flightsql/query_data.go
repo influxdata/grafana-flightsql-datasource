@@ -3,22 +3,13 @@ package flightsql
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"time"
 
-	"github.com/apache/arrow/go/v10/arrow"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"google.golang.org/grpc/metadata"
 )
-
-// TODO(brett): Make this configurable. This is an arbitrary value right
-// now. Grafana used to have a 1M row rowLimit established in open-source. I'll
-// let users hit that for now until we decide how to proceed.
-const rowLimit = 1_000_000
 
 // QueryData executes batches of ad-hoc queries and returns a batch of results.
 func (d *FlightSQLDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -55,7 +46,7 @@ func (d *FlightSQLDatasource) QueryData(ctx context.Context, req *backend.QueryD
 }
 
 // queryRequest is an inbound query request as part of a batch of queries sent
-// to (*FlightSQLDatasource).QueryData.
+// to [(*FlightSQLDatasource).QueryData].
 type queryRequest struct {
 	RefID                string `json:"refId"`
 	Text                 string `json:"queryText"`
@@ -65,7 +56,7 @@ type queryRequest struct {
 
 // query executes a SQL statement by issuing a `CommandStatementQuery` command to Flight SQL.
 func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.DataResponse {
-	ctx = metadata.AppendToOutgoingContext(ctx, mdBucketName, d.database)
+	ctx = metadata.NewOutgoingContext(ctx, d.md)
 
 	info, err := d.client.Execute(ctx, sql)
 	if err != nil {
@@ -81,78 +72,4 @@ func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.Dat
 	defer reader.Release()
 
 	return newQueryDataResponse(reader, sql)
-}
-
-type flightReader interface {
-	Next() bool
-	Schema() *arrow.Schema
-	Record() arrow.Record
-	Err() error
-}
-
-// newQueryDataResponse builds a DataResponse from a stream of Arrow data. The
-// DataResponse is divided into multiple Frames.
-//
-// If the data contains a `time` column of type `timestamp` and at least one
-// column of type `string`, the resulting table will be converted to wide
-// format.
-//
-// Data Frame Formatting Reference:
-// - https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#wide-format
-// - https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#long-format
-func newQueryDataResponse(reader flightReader, sql string) backend.DataResponse {
-	var resp backend.DataResponse
-
-	var (
-		hasTimeField   bool
-		hasStringField bool
-		schema         = reader.Schema()
-	)
-	for _, f := range schema.Fields() {
-		if f.Name == "time" && f.Type.ID() == arrow.TIMESTAMP {
-			hasTimeField = true
-		} else if f.Type.ID() == arrow.STRING {
-			hasStringField = true
-		}
-	}
-
-	frame := newFrame(schema, sql)
-
-	var rows int64
-READER:
-	for reader.Next() {
-		record := reader.Record()
-		for i, col := range record.Columns() {
-			if err := copyData(frame.Fields[i], col); err != nil {
-				resp.Error = err
-				break READER
-			}
-		}
-
-		rows += record.NumRows()
-		if rows > rowLimit {
-			frame.AppendNotices(data.Notice{
-				Severity: data.NoticeSeverityWarning,
-				Text:     fmt.Sprintf("Results have been limited to %v because the SQL row limit was reached", rowLimit),
-			})
-			break READER
-		}
-
-		if err := reader.Err(); err != nil && !errors.Is(err, io.EOF) {
-			resp.Error = err
-			break
-		}
-	}
-
-	if hasTimeField && hasStringField {
-		var err error
-		frame, err = data.LongToWide(frame, nil)
-		if err != nil {
-			resp.Error = err
-			return resp
-		}
-	}
-
-	resp.Frames = append(resp.Frames, frame)
-	return resp
 }

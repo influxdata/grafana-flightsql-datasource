@@ -26,9 +26,10 @@ func TestQueryData(t *testing.T) {
 	defer server.Shutdown()
 
 	cfg := config{
-		Host:   server.Addr().String(),
-		Token:  "secret",
-		Secure: false,
+		Addr:     server.Addr().String(),
+		Database: "sample",
+		Token:    "secret",
+		Secure:   false,
 	}
 	cfgJSON, err := json.Marshal(cfg)
 	require.NoError(t, err)

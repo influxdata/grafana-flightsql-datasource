@@ -1,7 +1,6 @@
 package flightsql
 
 import (
-	"context"
 	"crypto/x509"
 	"fmt"
 
@@ -16,41 +15,23 @@ func newFlightSQLClient(cfg config) (*flightsql.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("grpc dial options: %s", err)
 	}
-	return flightsql.NewClient(cfg.Host, nil, nil, dialOptions...)
-}
-
-type bearerToken struct {
-	token                    string
-	requireTransportSecurity bool
-}
-
-func (t bearerToken) GetRequestMetadata(ctx context.Context, in ...string) (map[string]string, error) {
-	return map[string]string{
-		"authorization": "Bearer " + t.token,
-	}, nil
-}
-
-func (t bearerToken) RequireTransportSecurity() bool {
-	return t.requireTransportSecurity
+	return flightsql.NewClient(cfg.Addr, nil, nil, dialOptions...)
 }
 
 func grpcDialOptions(cfg config) ([]grpc.DialOption, error) {
-	opts := []grpc.DialOption{
-		grpc.WithBlock(),
-	}
-
+	transport := grpc.WithTransportCredentials(insecure.NewCredentials())
 	if cfg.Secure {
 		pool, err := x509.SystemCertPool()
 		if err != nil {
 			return nil, fmt.Errorf("x509: %s", err)
 		}
-		return append(opts,
-			grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, "")),
-			grpc.WithPerRPCCredentials(bearerToken{token: cfg.Token, requireTransportSecurity: true}),
-		), nil
+		transport = grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, ""))
 	}
-	return append(opts,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithPerRPCCredentials(bearerToken{token: cfg.Token}),
-	), nil
+
+	opts := []grpc.DialOption{
+		grpc.WithBlock(),
+		transport,
+	}
+
+	return opts, nil
 }
