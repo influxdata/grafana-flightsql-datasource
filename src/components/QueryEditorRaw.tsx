@@ -1,20 +1,18 @@
 import {css} from '@emotion/css'
 import React, {useState} from 'react'
 import {useMeasure} from 'react-use'
-import AutoSizer from 'react-virtualized-auto-sizer'
-
 import {GrafanaTheme2} from '@grafana/data'
-import {Modal, useStyles2, useTheme2} from '@grafana/ui'
+import {Modal, useStyles2} from '@grafana/ui'
+import AutoSizer from 'react-virtualized-auto-sizer'
 
 import {RawEditor} from './RawEditor'
 import {QueryTool} from './QueryTool'
 
 export function QueryEditorRaw({onChange, query, editorLanguageDefinition}: any) {
-  const theme = useTheme2()
   const styles = useStyles2(getStyles)
   const [isExpanded, setIsExpanded] = useState(false)
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>()
-  const [editorRef, editorMeasure] = useMeasure<HTMLDivElement>()
+  // const [editorRef, editorMeasure] = useMeasure<HTMLDivElement>()
 
   const renderQueryEditor = (width?: number, height?: number) => {
     return (
@@ -44,31 +42,12 @@ export function QueryEditorRaw({onChange, query, editorLanguageDefinition}: any)
         }}
       </AutoSizer>
     ) : (
-      <div ref={editorRef}>{renderQueryEditor()}</div>
+      <div>{renderQueryEditor()}</div>
     )
   }
-
-  const renderPlaceholder = () => {
-    return (
-      <div
-        style={{
-          width: editorMeasure.width,
-          height: editorMeasure.height,
-          background: theme.colors.background.primary,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        Editing in expanded code editor
-      </div>
-    )
-  }
-
   return (
     <>
-      {isExpanded ? renderPlaceholder() : renderEditor()}
-      {isExpanded && (
+      {isExpanded ? (
         <Modal
           title={`Query ${query.refId}`}
           closeOnBackdropClick={false}
@@ -82,6 +61,8 @@ export function QueryEditorRaw({onChange, query, editorLanguageDefinition}: any)
         >
           {renderEditor(true)}
         </Modal>
+      ) : (
+        renderQueryEditor()
       )}
     </>
   )
