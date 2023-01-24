@@ -41,7 +41,7 @@ plugin present. A Docker Compose workflow is baked into the `yarn` workflow.
 
 #### Running without Docker
 
-1. Build frontend and backend to produce `grafana-flightsql-datasource.tar.gz`:
+1. Build frontend and backend to produce `influxdata-flightsql-datasource.tar.gz`:
 
    ```shell
    $ yarn build-plugin
@@ -50,8 +50,8 @@ plugin present. A Docker Compose workflow is baked into the `yarn` workflow.
 1. Unpack the archive to your chosen directory (e.g. `grafana-plugins/`).
 
    ```shell
-   $ mkdir -p grafana-plugins/grafana-flightsql-datasource
-   $ tar -xf grafana-flightsql-datasource.tar.gz -C grafana-plugins/grafana-flightsql-datasource
+   $ mkdir -p grafana-plugins/influxdata-flightsql-datasource
+   $ tar -xf influxdata-flightsql-datasource.tar.gz -C grafana-plugins/influxdata-flightsql-datasource
    ```
 1. Point Grafana to this the plugins directory. You have two options:
 
@@ -71,12 +71,12 @@ plugin present. A Docker Compose workflow is baked into the `yarn` workflow.
    - Add the following to your `grafana.ini`:
      ```ini
      [plugins]
-     allow_loading_unsigned_plugins = grafana-flightsql-datasource
+     allow_loading_unsigned_plugins = influxdata-flightsql-datasource
      ```
 	
 	- **OR** set the relevant environment variable where Grafana is started:
 	  ```shell
-	  GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-flightsql-datasource
+	  GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=influxdata-flightsql-datasource
 	  ```
 
 1. Navigate to the [Locally Running Grafana](http://localhost:3000/).
