@@ -3,57 +3,35 @@ import {css} from '@emotion/css'
 
 import {Select, SegmentSection, InlineLabel, Input} from '@grafana/ui'
 import {SelectableValue} from '@grafana/data'
-import {GetTables, checkCasing, buildQueryString} from './utils'
+import {
+  getTables,
+  checkCasing,
+  buildQueryString,
+  handleColumnChange,
+  addColumns,
+  removeColumns,
+  handleWhereChange,
+  addWheres,
+  removeWheres,
+  formatColumns,
+  formatWheres,
+  formatCreateLabel,
+} from './utils'
 import {SelectColumn} from './SelectColumn'
 import {WhereExp} from './WhereExp'
 
 export function BuilderView({query, datasource, onChange}: any) {
   const [columnValues, setColumnValues] = useState([{value: ''}])
   const [whereValues, setWhereValues] = useState([{value: ''}])
-
-  const handleColumnChange = (column: any) => {
-    let newColumnValues = [...columnValues]
-    newColumnValues[column.index]['value'] = column.value
-    setColumnValues(newColumnValues)
-  }
-
-  const addColumns = () => {
-    setColumnValues([...columnValues, {value: ''}])
-  }
-
-  const removeColumns = (i: any) => {
-    let newColumnValues = [...columnValues]
-    newColumnValues.splice(i, 1)
-    setColumnValues(newColumnValues)
-  }
-
-  const handleWhereChange = (where: any) => {
-    let newWhereValues = [...whereValues]
-    newWhereValues[where.index]['value'] = where.value
-    setWhereValues(newWhereValues)
-  }
-
-  const addWheres = () => {
-    setWhereValues([...whereValues, {value: ''}])
-  }
-
-  const removeWheres = (i: any) => {
-    let newWhereValues = [...whereValues]
-    newWhereValues.splice(i, 1)
-    setWhereValues(newWhereValues)
-  }
   const [groupBy, setGroupBy] = useState('')
   const [where, setWhere] = useState('')
   const [orderBy, setOrderBy] = useState('')
   const [limit, setLimit] = useState('')
+  const [columns, setColumns] = useState()
   const [table, setTable] = useState<SelectableValue<string>>()
   const [column, setColumn] = useState<SelectableValue<string>>()
-  const {loadingTable, tables, errorTable} = GetTables(datasource)
-  const [columns, setColumns] = useState()
-  const formatCreateLabel = (v: string) => v
-  const selectClass = css({
-    minWidth: '160px',
-  })
+
+  const {loadingTable, tables, errorTable} = getTables(datasource)
 
   useEffect(() => {
     ;(async () => {
@@ -72,16 +50,10 @@ export function BuilderView({query, datasource, onChange}: any) {
 
   useEffect(() => {
     if (table && column) {
-      const selectColumns = columnValues
-        .map((v) => checkCasing(v.value))
-        .join(',')
-        .replace(/,\s*$/, '')
-      const t = checkCasing(table.value || '')
-      const whereExps = whereValues
-        .map((w) => w.value)
-        .filter(Boolean)
-        .join(' and ')
-      const queryText = buildQueryString(selectColumns, t, whereExps, orderBy, groupBy, limit)
+      const selectColumns = formatColumns(columnValues)
+      const casedTable = checkCasing(table.value || '')
+      const whereExps = formatWheres(whereValues)
+      const queryText = buildQueryString(selectColumns, casedTable, whereExps, orderBy, groupBy, limit)
       onChange({...query, queryText: queryText})
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,14 +61,14 @@ export function BuilderView({query, datasource, onChange}: any) {
 
   useEffect(() => {
     if (column) {
-      handleColumnChange(column)
+      handleColumnChange(column, setColumnValues, columnValues)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [column])
 
   useEffect(() => {
     if (where) {
-      handleWhereChange(where)
+      handleWhereChange(where, setWhereValues, whereValues)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [where])
@@ -105,6 +77,9 @@ export function BuilderView({query, datasource, onChange}: any) {
     setColumnValues([{value: ''}])
   }, [table])
 
+  const selectClass = css({
+    minWidth: '160px',
+  })
   return (
     <>
       <div className={selectClass}>
@@ -135,13 +110,23 @@ export function BuilderView({query, datasource, onChange}: any) {
                 formatCreateLabel={formatCreateLabel}
               />
               {index + 1 >= columnValues.length && (
-                <InlineLabel as="button" className="" onClick={addColumns} width="auto">
+                <InlineLabel
+                  as="button"
+                  className=""
+                  onClick={() => addColumns(setColumnValues, columnValues)}
+                  width="auto"
+                >
                   +
                 </InlineLabel>
               )}
 
               {index > 0 && (
-                <InlineLabel as="button" className="" width="auto" onClick={() => removeColumns(index)}>
+                <InlineLabel
+                  as="button"
+                  className=""
+                  width="auto"
+                  onClick={() => removeColumns(index, setColumnValues, columnValues)}
+                >
                   -
                 </InlineLabel>
               )}
@@ -155,12 +140,22 @@ export function BuilderView({query, datasource, onChange}: any) {
             <>
               <WhereExp index={index} setWhere={setWhere} whereValues={whereValues} />
               {index + 1 >= whereValues.length && (
-                <InlineLabel as="button" className="" onClick={addWheres} width="auto">
+                <InlineLabel
+                  as="button"
+                  className=""
+                  onClick={() => addWheres(whereValues, setWhereValues)}
+                  width="auto"
+                >
                   +
                 </InlineLabel>
               )}
               {index > 0 && (
-                <InlineLabel as="button" className="" width="auto" onClick={() => removeWheres(index)}>
+                <InlineLabel
+                  as="button"
+                  className=""
+                  width="auto"
+                  onClick={() => removeWheres(index, whereValues, setWhereValues)}
+                >
                   -
                 </InlineLabel>
               )}
