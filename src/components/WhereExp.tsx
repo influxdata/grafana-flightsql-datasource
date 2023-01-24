@@ -1,5 +1,4 @@
 import React from 'react'
-
 import {Input} from '@grafana/ui'
 
 export const WhereExp = ({index, setWhere, whereValues}: any) => (

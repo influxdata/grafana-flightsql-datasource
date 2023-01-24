@@ -1,5 +1,4 @@
 import React from 'react'
-
 import {Select} from '@grafana/ui'
 
 export const SelectColumn = ({columns, index, setColumn, columnValues, formatCreateLabel}: any) => (

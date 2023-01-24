@@ -1,6 +1,5 @@
 import {DataSourceInstanceSettings, CoreApp} from '@grafana/data'
 import {DataSourceWithBackend} from '@grafana/runtime'
-
 import {SQLQuery, FlightSQLDataSourceOptions, DEFAULT_QUERY} from './types'
 
 export class FlightSQLDataSource extends DataSourceWithBackend<SQLQuery, FlightSQLDataSourceOptions> {
