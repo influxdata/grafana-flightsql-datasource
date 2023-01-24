@@ -1,6 +1,7 @@
 import {useAsync} from 'react-use'
 import {FlightSQLDataSource} from '../datasource'
 import {SelectableValue} from '@grafana/data'
+import {LanguageCompletionProvider, getStandardSQLCompletionProvider} from '@grafana/experimental'
 
 type AsyncTablesState = {
   loadingTable: boolean
@@ -8,7 +9,7 @@ type AsyncTablesState = {
   errorTable: Error | undefined
 }
 
-export const getTables = (datasource: FlightSQLDataSource): AsyncTablesState => {
+export const GetTables = (datasource: FlightSQLDataSource): AsyncTablesState => {
   const result = useAsync(async () => {
     const res = await datasource.getTables()
     return res.frames[0].data.values[2].map((t: string) => ({
@@ -109,3 +110,82 @@ export const formatWheres = (whereValues: any) => {
 }
 
 export const formatCreateLabel = (v: string) => v
+
+export const onHostChange = (event: any, options: any, onOptionsChange: any) => {
+  const jsonData = {
+    ...options.jsonData,
+    host: event.target.value,
+  }
+  onOptionsChange({...options, jsonData})
+}
+
+export const onDatabaseChange = (event: any, options: any, onOptionsChange: any) => {
+  const jsonData = {
+    ...options.jsonData,
+    database: event.target.value,
+  }
+  onOptionsChange({...options, jsonData})
+}
+
+export const onTokenChange = (event: any, options: any, onOptionsChange: any) => {
+  const jsonData = {
+    ...options.jsonData,
+    token: event.target.value,
+  }
+  onOptionsChange({...options, jsonData})
+}
+
+export const onSecureChange = (options: any, onOptionsChange: any) => {
+  const jsonData = {
+    ...options.jsonData,
+    secure: !options.jsonData.secure,
+  }
+  onOptionsChange({...options, jsonData})
+}
+
+export const onUsernameChange = (event: any, options: any, onOptionsChange: any) => {
+  const jsonData = {
+    ...options.jsonData,
+    username: event.target.value,
+  }
+  onOptionsChange({...options, jsonData})
+}
+
+export const onPasswordChange = (event: any, options: any, onOptionsChange: any) => {
+  const jsonData = {
+    ...options.jsonData,
+    password: event.target.value,
+  }
+  onOptionsChange({...options, jsonData})
+}
+
+export const onAuthTypeChange = (selectedAuthType: any, options: any, onOptionsChange: any) => {
+  const jsonData = {
+    ...options.jsonData,
+    selectedAuthType: selectedAuthType?.label,
+  }
+  onOptionsChange({...options, jsonData})
+}
+
+export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider =
+  ({getTables, getColumns, sqlInfo, macros}) =>
+  (monaco, language) => {
+    return {
+      ...(language &&
+        getStandardSQLCompletionProvider(monaco, {
+          ...language,
+          builtinFunctions: sqlInfo.builtinFunctions,
+          keywords: sqlInfo.keywords,
+        })),
+      triggerCharacters: ['.', ' ', '$', ',', '(', "'"],
+      tables: {
+        resolve: () => {
+          return getTables()
+        },
+      },
+      columns: {
+        resolve: (t: string) => getColumns(t),
+      },
+      supportedMacros: () => macros,
+    }
+  }

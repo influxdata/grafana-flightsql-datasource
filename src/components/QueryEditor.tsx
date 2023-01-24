@@ -1,42 +1,20 @@
 import React, {useState, useMemo, useCallback, useEffect} from 'react'
 import {Button, Modal} from '@grafana/ui'
 import {QueryEditorProps} from '@grafana/data'
+import {MacroType} from '@grafana/experimental'
 import {FlightSQLDataSource} from '../datasource'
-import {FlightSQLDataSourceOptions, SQLQuery} from '../types'
+import {FlightSQLDataSourceOptions, SQLQuery, sqlLanguageDefinition} from '../types'
+import {getSqlCompletionProvider} from './utils'
 
 import {QueryEditorRaw} from './QueryEditorRaw'
-import {LanguageCompletionProvider, getStandardSQLCompletionProvider, MacroType} from '@grafana/experimental'
-import {formatSQL} from './sqlFormatter'
 import {BuilderView} from './BuilderView'
-
-export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider =
-  ({getTables, getColumns, sqlInfo, macros}) =>
-  (monaco, language) => {
-    return {
-      ...(language &&
-        getStandardSQLCompletionProvider(monaco, {
-          ...language,
-          builtinFunctions: sqlInfo.builtinFunctions,
-          keywords: sqlInfo.keywords,
-        })),
-      triggerCharacters: ['.', ' ', '$', ',', '(', "'"],
-      tables: {
-        resolve: () => {
-          return getTables()
-        },
-      },
-      columns: {
-        resolve: (t: string) => getColumns(t),
-      },
-      supportedMacros: () => macros,
-    }
-  }
 
 export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuery, FlightSQLDataSourceOptions>) {
   const {onChange, query, datasource} = props
   const [isExpanded, setIsExpanded] = useState(false)
   const [sqlInfo, setSqlInfo] = useState<any>()
   const [macros, setMacros] = useState<any>()
+  const [builderView, setView] = useState(true)
 
   useEffect(() => {
     ;(async () => {
@@ -60,8 +38,6 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
       setMacros(macros)
     })()
   }, [datasource])
-
-  const [builderView, setView] = useState(true)
 
   const getTables = useCallback(async () => {
     const res = await datasource.getTables()
@@ -91,11 +67,6 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
       }),
     [getTables, getColumns, sqlInfo, macros]
   )
-
-  const sqlLanguageDefinition = {
-    id: 'sql',
-    formatter: formatSQL,
-  }
 
   return (
     <>
