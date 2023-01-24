@@ -79,6 +79,10 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 	}
 
 	md := metadata.MD{}
+	for k, v := range cfg.Metadata {
+		md.Set(k, v)
+	}
+	// TODO(brett): Remove when the UI is completely configurable via metadata.
 	md.Set(mdBucketName, cfg.Database)
 
 	ctx := context.Background()
@@ -87,7 +91,8 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 		if err != nil {
 			return nil, fmt.Errorf("flightsql: %s", err)
 		}
-		md, _ = metadata.FromOutgoingContext(ctx)
+		authMD, _ := metadata.FromOutgoingContext(ctx)
+		md = metadata.Join(md, authMD)
 	} else {
 		md.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Token))
 	}
