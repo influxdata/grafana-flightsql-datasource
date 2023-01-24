@@ -1,79 +1,24 @@
-import React, {ChangeEvent, useEffect, useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {InlineSwitch, FieldSet, InlineField, SecretInput, Input, Select, InlineFieldRow} from '@grafana/ui'
 import {DataSourcePluginOptionsEditorProps, SelectableValue} from '@grafana/data'
-import {FlightSQLDataSourceOptions} from '../types'
+import {FlightSQLDataSourceOptions, authTypeOptions} from '../types'
+import {
+  onHostChange,
+  onDatabaseChange,
+  onTokenChange,
+  onSecureChange,
+  onUsernameChange,
+  onPasswordChange,
+  onAuthTypeChange,
+} from './utils'
 
 export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQLDataSourceOptions>) {
-  const onHostChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const {onOptionsChange, options} = props
-    const jsonData = {
-      ...options.jsonData,
-      host: event.target.value,
-    }
-    onOptionsChange({...options, jsonData})
-  }
-
-  const onDatabaseChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const {onOptionsChange, options} = props
-    const jsonData = {
-      ...options.jsonData,
-      database: event.target.value,
-    }
-    onOptionsChange({...options, jsonData})
-  }
-
-  const onTokenChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const {onOptionsChange, options} = props
-    const jsonData = {
-      ...options.jsonData,
-      token: event.target.value,
-    }
-    onOptionsChange({...options, jsonData})
-  }
-
-  const onSecureChange = () => {
-    const {onOptionsChange, options} = props
-    const jsonData = {
-      ...options.jsonData,
-      secure: !options.jsonData.secure,
-    }
-    onOptionsChange({...options, jsonData})
-  }
-
-  const onUsernameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const {onOptionsChange, options} = props
-    const jsonData = {
-      ...options.jsonData,
-      username: event.target.value,
-    }
-    onOptionsChange({...options, jsonData})
-  }
-
-  const onPasswordChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const {onOptionsChange, options} = props
-    const jsonData = {
-      ...options.jsonData,
-      password: event.target.value,
-    }
-    onOptionsChange({...options, jsonData})
-  }
-  const authTypeOptions = [
-    {key: 0, label: 'none', title: 'none'},
-    {key: 1, label: 'username/password', title: 'username/password'},
-    {key: 2, label: 'token', title: 'token'},
-  ]
+  const {options, onOptionsChange} = props
+  const {jsonData} = options
   const [selectedAuthType, setAuthType] = useState<SelectableValue<string>>(authTypeOptions[2])
-  const onAuthTypeChange = () => {
-    const {onOptionsChange, options} = props
-    const jsonData = {
-      ...options.jsonData,
-      selectedAuthType: selectedAuthType?.label,
-    }
-    onOptionsChange({...options, jsonData})
-  }
 
   useEffect(() => {
-    onAuthTypeChange()
+    onAuthTypeChange(selectedAuthType, options, onOptionsChange)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAuthType])
 
@@ -88,9 +33,6 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const {options} = props
-  const {jsonData} = options
-
   return (
     <div>
       <FieldSet label="FlightSQL Connection" width={400}>
@@ -101,7 +43,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
             type="text"
             value={jsonData.host || ''}
             placeholder="localhost:1234"
-            onChange={onHostChange}
+            onChange={(e) => onHostChange(e, options, onOptionsChange)}
           ></Input>
         </InlineField>
 
@@ -111,7 +53,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
             name="database"
             type="text"
             placeholder="dbName"
-            onChange={onDatabaseChange}
+            onChange={(e) => onDatabaseChange(e, options, onOptionsChange)}
             value={jsonData.database || ''}
           ></Input>
         </InlineField>
@@ -135,8 +77,8 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
               type="text"
               value={jsonData.token || ''}
               placeholder="****************"
-              onChange={onTokenChange}
-              onReset={() => {}}
+              onChange={(e) => onTokenChange(e, options, onOptionsChange)}
+              onReset={() => onTokenChange(null, options, onOptionsChange)}
               isConfigured={false}
             ></SecretInput>
           </InlineField>
@@ -149,7 +91,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
                 name="username"
                 type="text"
                 placeholder="username"
-                onChange={onUsernameChange}
+                onChange={(e) => onUsernameChange(e, options, onOptionsChange)}
                 value={jsonData.username || ''}
               ></Input>
             </InlineField>
@@ -160,8 +102,8 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
                 type="text"
                 value={jsonData.password || ''}
                 placeholder="****************"
-                onChange={onPasswordChange}
-                onReset={() => {}}
+                onChange={(e) => onPasswordChange(e, options, onOptionsChange)}
+                onReset={() => onPasswordChange(null, options, onOptionsChange)}
                 isConfigured={false}
               ></SecretInput>
             </InlineField>
@@ -169,7 +111,13 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
         )}
 
         <InlineField labelWidth={20} label="Require TLS / SSL">
-          <InlineSwitch label="" value={jsonData.secure} onChange={onSecureChange} showLabel={false} disabled={false} />
+          <InlineSwitch
+            label=""
+            value={jsonData.secure}
+            onChange={() => onSecureChange(options, onOptionsChange)}
+            showLabel={false}
+            disabled={false}
+          />
         </InlineField>
       </FieldSet>
     </div>

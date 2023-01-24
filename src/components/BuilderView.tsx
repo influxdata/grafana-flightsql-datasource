@@ -4,7 +4,7 @@ import {css} from '@emotion/css'
 import {Select, SegmentSection, InlineLabel, Input} from '@grafana/ui'
 import {SelectableValue} from '@grafana/data'
 import {
-  getTables,
+  GetTables,
   checkCasing,
   buildQueryString,
   handleColumnChange,
@@ -31,7 +31,7 @@ export function BuilderView({query, datasource, onChange}: any) {
   const [table, setTable] = useState<SelectableValue<string>>()
   const [column, setColumn] = useState<SelectableValue<string>>()
 
-  const {loadingTable, tables, errorTable} = getTables(datasource)
+  const {loadingTable, tables, errorTable} = GetTables(datasource)
 
   useEffect(() => {
     ;(async () => {
