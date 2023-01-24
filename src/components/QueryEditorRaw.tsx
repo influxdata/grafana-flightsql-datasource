@@ -12,7 +12,6 @@ export function QueryEditorRaw({onChange, query, editorLanguageDefinition}: any)
   const styles = useStyles2(getStyles)
   const [isExpanded, setIsExpanded] = useState(false)
   const [toolboxRef, toolboxMeasure] = useMeasure<HTMLDivElement>()
-  // const [editorRef, editorMeasure] = useMeasure<HTMLDivElement>()
 
   const renderQueryEditor = (width?: number, height?: number) => {
     return (
