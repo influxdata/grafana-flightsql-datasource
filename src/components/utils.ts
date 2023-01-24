@@ -119,14 +119,6 @@ export const onHostChange = (event: any, options: any, onOptionsChange: any) => 
   onOptionsChange({...options, jsonData})
 }
 
-export const onDatabaseChange = (event: any, options: any, onOptionsChange: any) => {
-  const jsonData = {
-    ...options.jsonData,
-    database: event.target.value,
-  }
-  onOptionsChange({...options, jsonData})
-}
-
 export const onTokenChange = (event: any, options: any, onOptionsChange: any) => {
   const jsonData = {
     ...options.jsonData,
@@ -212,7 +204,7 @@ export const onKeyChange = (
   newMetaValues[index]['key'] = event.target.value
   const jsonData = {
     ...options.jsonData,
-    metaDataArr: newMetaValues,
+    metadata: newMetaValues,
   }
   onOptionsChange({...options, jsonData})
   setMetaData(newMetaValues)
@@ -230,7 +222,7 @@ export const onValueChange = (
   newMetaValues[index]['value'] = event.target.value
   const jsonData = {
     ...options.jsonData,
-    metaDataArr: newMetaValues,
+    metadata: newMetaValues,
   }
   onOptionsChange({...options, jsonData})
   setMetaData(newMetaValues)

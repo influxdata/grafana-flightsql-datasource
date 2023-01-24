@@ -12,13 +12,12 @@ export const DEFAULT_QUERY: Partial<SQLQuery> = {}
  */
 export interface FlightSQLDataSourceOptions extends DataSourceJsonData {
   host?: string
-  database?: string
   token?: string
   secure?: boolean
   username?: string
   password?: string
   selectedAuthType?: string
-  metaDataArr?: any
+  metadata?: any
 }
 
 export type TablesResponse = {

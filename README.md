@@ -29,11 +29,13 @@ plugin present. A Docker Compose workflow is baked into the `yarn` workflow.
    ```shell
    $ yarn build-plugin
    ```
+
 1. Start Grafana in Docker Compose:
 
    ```shell
    $ yarn server
    ```
+
    The artifacts in `dist/` will be mounted and loaded into the installation.
 
 1. Navigate to the [Locally Running Grafana](http://localhost:3000/).
@@ -47,16 +49,18 @@ plugin present. A Docker Compose workflow is baked into the `yarn` workflow.
    ```shell
    $ yarn build-plugin
    ```
-   
+
 1. Unpack the archive to your chosen directory (e.g. `grafana-plugins/`).
 
    ```shell
    $ mkdir -p grafana-plugins/influxdata-flightsql-datasource
    $ tar -xf influxdata-flightsql-datasource.tar.gz -C grafana-plugins/influxdata-flightsql-datasource
    ```
+
 1. Point Grafana to this the plugins directory. You have two options:
 
    - Edit the `paths.plugins` directive in your `grafana.ini`:
+
      ```ini
      [paths]
      plugins = grafana-plugins/
@@ -70,15 +74,16 @@ plugin present. A Docker Compose workflow is baked into the `yarn` workflow.
 1. The plugin is not yet signed so you will need to add it to the Grafana configuration of allowed unsigned plugins.
 
    - Add the following to your `grafana.ini`:
+
      ```ini
      [plugins]
      allow_loading_unsigned_plugins = influxdata-flightsql-datasource
      ```
-	
-	- **OR** set the relevant environment variable where Grafana is started:
-	  ```shell
-	  GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=influxdata-flightsql-datasource
-	  ```
+
+   - **OR** set the relevant environment variable where Grafana is started:
+     ```shell
+     GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=influxdata-flightsql-datasource
+     ```
 
 1. Navigate to the [Locally Running Grafana](http://localhost:3000/).
 1. Follow the instructions in [Adding a Flight SQL
@@ -95,11 +100,12 @@ TODO
 ### Configuring the Plugin
 
 - **Host:** Provide the host:port of your Flight SQL client.
-- **Database:** Provide your target database name.
-- **Token:** Provide a bearer token for accessing your client.
+- **AuthType** Select between none, username/password and token.
+- **Token:** If auth type is token provide a bearer token for accessing your client.
+- **Username/Password** iF auth type is username and password provide a username and password.
 - **Require TLS/SSL:** Either enable or disable TLS based on the configuration of your client.
 
-A username/password option is under active development.
+- **MetaData** Provide optional key, value pairs that you need sent to your Flight SQL client.
 
 Vendor-specific connectivity documentation can be [found in the wiki](https://github.com/influxdata/grafana-flightsql-datasource/wiki).
 

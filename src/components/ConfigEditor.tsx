@@ -31,7 +31,6 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
       ...options.jsonData,
       selectedAuthType: 'token',
       secure: true,
-      metaDataArr: [{key: '', value: ''}],
     }
     onOptionsChange({...options, jsonData})
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -42,7 +41,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
     const mapData = metaDataArr.map((m) => ({[m.key]: m.value}))
     const jsonData = {
       ...options.jsonData,
-      metaDataArr: mapData,
+      metadata: mapData,
     }
     onOptionsChange({...options, jsonData})
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,15 +125,15 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
       </FieldSet>
       <FieldSet label="MetaData" width={400}>
         {metaDataArr?.map((_: any, i: any) => (
-          <InlineFieldRow style={{flexFlow: 'row'}}>
+          <InlineFieldRow key={i} style={{flexFlow: 'row'}}>
             <InlineField labelWidth={20} label="Key">
               <Input
                 key={i}
                 width={40}
-                name="something"
+                name="key"
                 type="text"
                 value={metaDataArr[i].key || ''}
-                placeholder="something"
+                placeholder="key"
                 onChange={(e) => onKeyChange(e, options, onOptionsChange, metaDataArr, i, setMetaData)}
               ></Input>
             </InlineField>
@@ -142,10 +141,10 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
               <Input
                 key={i}
                 width={40}
-                name="something"
+                name="value"
                 type="text"
                 value={metaDataArr[i].value || ''}
-                placeholder="something"
+                placeholder="value"
                 onChange={(e) => onValueChange(e, options, onOptionsChange, metaDataArr, i, setMetaData)}
               ></Input>
             </InlineField>
