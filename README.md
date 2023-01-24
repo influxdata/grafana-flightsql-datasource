@@ -17,6 +17,7 @@ These instructions assume you have the following tools installed:
 
 - [`yarn`](https://yarnpkg.com)
 - [`mage`](https://magefile.org)
+- [`grafana version 9.2.x`](https://grafana.com/grafana/download/9.2.0)
 
 #### Docker Compose
 
