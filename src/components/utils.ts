@@ -189,3 +189,49 @@ export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider
       supportedMacros: () => macros,
     }
   }
+
+export const addMetaData = (setMetaData: any, metaDataArr: any) => {
+  setMetaData([...metaDataArr, {value: ''}])
+}
+
+export const removeMetaData = (i: any, setMetaData: any, metaDataArr: any) => {
+  let newMetaValues = [...metaDataArr]
+  newMetaValues.splice(i, 1)
+  setMetaData(newMetaValues)
+}
+
+export const onKeyChange = (
+  event: any,
+  options: any,
+  onOptionsChange: any,
+  metaDataArr: any,
+  index: any,
+  setMetaData: any
+) => {
+  let newMetaValues = [...metaDataArr]
+  newMetaValues[index]['key'] = event.target.value
+  const jsonData = {
+    ...options.jsonData,
+    metaDataArr: newMetaValues,
+  }
+  onOptionsChange({...options, jsonData})
+  setMetaData(newMetaValues)
+}
+
+export const onValueChange = (
+  event: any,
+  options: any,
+  onOptionsChange: any,
+  metaDataArr: any,
+  index: any,
+  setMetaData: any
+) => {
+  let newMetaValues = [...metaDataArr]
+  newMetaValues[index]['value'] = event.target.value
+  const jsonData = {
+    ...options.jsonData,
+    metaDataArr: newMetaValues,
+  }
+  onOptionsChange({...options, jsonData})
+  setMetaData(newMetaValues)
+}

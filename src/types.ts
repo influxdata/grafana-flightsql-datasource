@@ -18,6 +18,7 @@ export interface FlightSQLDataSourceOptions extends DataSourceJsonData {
   username?: string
   password?: string
   selectedAuthType?: string
+  metaDataArr?: any
 }
 
 export type TablesResponse = {
