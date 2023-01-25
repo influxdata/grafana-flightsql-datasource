@@ -133,7 +133,10 @@ func (d *FlightSQLDatasource) CallResource(ctx context.Context, req *backend.Cal
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (d *FlightSQLDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	query := &sqlutil.Query{RawSQL: "select 1"}
+	query := &sqlutil.Query{
+		RawSQL: "select 1",
+		Format: sqlutil.FormatOptionTable,
+	}
 	if resp := d.query(ctx, query); resp.Error != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
