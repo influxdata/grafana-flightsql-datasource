@@ -1,9 +1,9 @@
 import React, {useState, useMemo, useCallback, useEffect} from 'react'
-import {Button, Modal} from '@grafana/ui'
-import {QueryEditorProps} from '@grafana/data'
+import {Button, Modal, SegmentSection, Select, InlineFieldRow} from '@grafana/ui'
+import {QueryEditorProps, SelectableValue} from '@grafana/data'
 import {MacroType} from '@grafana/experimental'
 import {FlightSQLDataSource} from '../datasource'
-import {FlightSQLDataSourceOptions, SQLQuery, sqlLanguageDefinition} from '../types'
+import {FlightSQLDataSourceOptions, SQLQuery, sqlLanguageDefinition, QUERY_FORMAT_OPTIONS} from '../types'
 import {getSqlCompletionProvider} from './utils'
 
 import {QueryEditorRaw} from './QueryEditorRaw'
@@ -15,6 +15,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   const [sqlInfo, setSqlInfo] = useState<any>()
   const [macros, setMacros] = useState<any>()
   const [builderView, setView] = useState(true)
+  const [format, setFormat] = useState<SelectableValue<string>>()
 
   useEffect(() => {
     ;(async () => {
@@ -68,6 +69,15 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
     [getTables, getColumns, sqlInfo, macros]
   )
 
+  useEffect(() => {
+    onChange({...query, format: format?.value})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [format])
+
+  useEffect(() => {
+    setFormat(QUERY_FORMAT_OPTIONS[1])
+  }, [])
+
   return (
     <>
       {isExpanded && (
@@ -113,9 +123,20 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
           }}
         />
       )}
-      <Button fill="outline" size="sm" onClick={() => setIsExpanded(!isExpanded)}>
-        {builderView ? 'Edit SQL' : 'Builder View'}
-      </Button>
+      <InlineFieldRow style={{flexFlow: 'row', alignItems: 'center'}}>
+        <SegmentSection label="Format As" fill={true}>
+          <Select
+            options={QUERY_FORMAT_OPTIONS}
+            onChange={setFormat}
+            value={query.format}
+            width={15}
+            placeholder="Table"
+          />
+        </SegmentSection>
+        <Button fill="outline" size="md" onClick={() => setIsExpanded(!isExpanded)}>
+          {builderView ? 'Edit SQL' : 'Builder View'}
+        </Button>
+      </InlineFieldRow>
     </>
   )
 }
