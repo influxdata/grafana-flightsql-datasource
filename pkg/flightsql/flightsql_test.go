@@ -26,9 +26,9 @@ func TestQueryData(t *testing.T) {
 	defer server.Shutdown()
 
 	cfg := config{
-		Addr:     server.Addr().String(),
-		Token:    "secret",
-		Secure:   false,
+		Addr:   server.Addr().String(),
+		Token:  "secret",
+		Secure: false,
 	}
 	cfgJSON, err := json.Marshal(cfg)
 	require.NoError(t, err)
@@ -72,8 +72,9 @@ func mustQueryJSON(t *testing.T, refID, sql string) []byte {
 	t.Helper()
 
 	b, err := json.Marshal(queryRequest{
-		RefID: refID,
-		Text:  sql,
+		RefID:  refID,
+		Text:   sql,
+		Format: "table",
 	})
 	if err != nil {
 		panic(err)
