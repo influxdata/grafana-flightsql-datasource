@@ -45,11 +45,13 @@ func newQueryDataResponse(reader recordReader, query *sqlutil.Query) backend.Dat
 	case sqlutil.FormatOptionTimeSeries:
 		if _, idx := frame.FieldByName("time"); idx == -1 {
 			resp.Error = fmt.Errorf("no time column found")
+			return resp
 		}
 		var err error
 		frame, err = data.LongToWide(frame, nil)
 		if err != nil {
 			resp.Error = err
+			return resp
 		}
 	case sqlutil.FormatOptionTable:
 		// No changes to the output. Send it as is.
