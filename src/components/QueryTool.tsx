@@ -10,7 +10,7 @@ interface QueryToolProps {
 }
 
 export const QueryTool = ({onFormatCode, onExpand, isExpanded}: QueryToolProps) => (
-  <div className="none">
+  <div className="none" style={{padding: '5px 0'}}>
     <div>
       <HorizontalGroup spacing="sm">
         {onFormatCode && <IconButton onClick={onFormatCode} name="brackets-curly" size="xs" tooltip="Format query" />}
