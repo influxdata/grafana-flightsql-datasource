@@ -1,5 +1,5 @@
-import {DataSourceInstanceSettings, CoreApp} from '@grafana/data'
-import {DataSourceWithBackend} from '@grafana/runtime'
+import {DataSourceInstanceSettings, CoreApp, ScopedVars, VariableWithMultiSupport} from '@grafana/data'
+import {DataSourceWithBackend, getTemplateSrv} from '@grafana/runtime'
 import {SQLQuery, FlightSQLDataSourceOptions, DEFAULT_QUERY} from './types'
 
 export class FlightSQLDataSource extends DataSourceWithBackend<SQLQuery, FlightSQLDataSourceOptions> {
@@ -9,6 +9,39 @@ export class FlightSQLDataSource extends DataSourceWithBackend<SQLQuery, FlightS
 
   getDefaultQuery(_: CoreApp): Partial<SQLQuery> {
     return DEFAULT_QUERY
+  }
+
+  quoteLiteral(value: string) {
+    return "'" + value.replace(/'/g, "''") + "'"
+  }
+
+  interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
+    if (typeof value === 'string') {
+      if (variable.multi || variable.includeAll) {
+        return this.quoteLiteral(value)
+      } else {
+        return String(value).replace(/'/g, "''")
+      }
+    }
+
+    if (typeof value === 'number') {
+      return value
+    }
+
+    if (Array.isArray(value)) {
+      const quotedValues = value.map((v) => this.quoteLiteral(v))
+      return quotedValues.join(',')
+    }
+
+    return value
+  }
+
+  applyTemplateVariables(query: SQLQuery, scopedVars: ScopedVars): Record<string, any> {
+    const interpolatedQuery: SQLQuery = {
+      ...query,
+      queryText: getTemplateSrv().replace(query.queryText, scopedVars, this.interpolateVariable),
+    }
+    return interpolatedQuery
   }
 
   getSQLInfo(): Promise<any> {
