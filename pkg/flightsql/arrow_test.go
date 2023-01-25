@@ -12,6 +12,7 @@ import (
 	"github.com/apache/arrow/go/v10/arrow/memory"
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,7 +45,8 @@ func TestNewQueryDataResponse(t *testing.T) {
 	reader, err := array.NewRecordReader(schema, records)
 	require.NoError(t, err)
 
-	resp := newQueryDataResponse(errReader{RecordReader: reader}, "")
+	query := &sqlutil.Query{Format: sqlutil.FormatOptionTable}
+	resp := newQueryDataResponse(errReader{RecordReader: reader}, query)
 	require.NoError(t, resp.Error)
 	require.Len(t, resp.Frames, 1)
 	require.Len(t, resp.Frames[0].Fields, 2)
@@ -93,7 +95,8 @@ func TestNewQueryDataResponse_Error(t *testing.T) {
 		RecordReader: reader,
 		err:          fmt.Errorf("explosion!"),
 	}
-	resp := newQueryDataResponse(wrappedReader, "")
+	query := &sqlutil.Query{Format: sqlutil.FormatOptionTable}
+	resp := newQueryDataResponse(wrappedReader, query)
 	require.Error(t, resp.Error)
 	require.Equal(t, fmt.Errorf("explosion!"), resp.Error)
 }
@@ -133,7 +136,7 @@ func TestNewQueryDataResponse_WideTable(t *testing.T) {
 	reader, err := array.NewRecordReader(schema, records)
 	require.NoError(t, err)
 
-	resp := newQueryDataResponse(errReader{RecordReader: reader}, "")
+	resp := newQueryDataResponse(errReader{RecordReader: reader}, &sqlutil.Query{})
 	require.NoError(t, resp.Error)
 	require.Len(t, resp.Frames, 1)
 	require.Equal(t, 3, resp.Frames[0].Rows())

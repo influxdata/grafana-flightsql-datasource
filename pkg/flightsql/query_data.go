@@ -15,23 +15,29 @@ import (
 func (d *FlightSQLDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 	for _, qreq := range req.Queries {
-		// The shape of the payload we're parsing from backend.DataQuery.JSON
-		// doesn't have the same fields as what sqlutil.Query expects to parse
-		// when using sqlutil.GetQuery. Parse it ourselves and create a
-		// sqlutil.Query value.
 		var q queryRequest
 		if err := json.Unmarshal(qreq.JSON, &q); err != nil {
 			response.Responses[qreq.RefID] = backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("unmarshal query request: %s", err))
 			continue
 		}
+
+		var format sqlutil.FormatQueryOption
+		switch q.Format {
+		case "time_series":
+			format = sqlutil.FormatOptionTimeSeries
+		case "table":
+			format = sqlutil.FormatOptionTable
+		default:
+			format = sqlutil.FormatOptionTimeSeries
+		}
+
 		query := &sqlutil.Query{
 			RawSQL:        q.Text,
 			RefID:         q.RefID,
 			MaxDataPoints: q.MaxDataPoints,
 			Interval:      time.Duration(q.IntervalMilliseconds) * time.Millisecond,
 			TimeRange:     qreq.TimeRange,
-			// There are other fields here that are worth looking into. Things
-			// seem to work just fine, but Format and FillMissing seem useful.
+			Format:        format,
 		}
 
 		// Process macros and execute the query.
@@ -40,7 +46,8 @@ func (d *FlightSQLDatasource) QueryData(ctx context.Context, req *backend.QueryD
 			response.Responses[qreq.RefID] = backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("macro interpolation: %s", err))
 			continue
 		}
-		response.Responses[qreq.RefID] = d.query(ctx, sql)
+		query.RawSQL = sql
+		response.Responses[qreq.RefID] = d.query(ctx, query)
 	}
 	return response, nil
 }
@@ -52,13 +59,14 @@ type queryRequest struct {
 	Text                 string `json:"queryText"`
 	IntervalMilliseconds int    `json:"intervalMs"`
 	MaxDataPoints        int64  `json:"maxDataPoints"`
+	Format               string `json:"format"`
 }
 
 // query executes a SQL statement by issuing a `CommandStatementQuery` command to Flight SQL.
-func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.DataResponse {
+func (d *FlightSQLDatasource) query(ctx context.Context, query *sqlutil.Query) backend.DataResponse {
 	ctx = metadata.NewOutgoingContext(ctx, d.md)
 
-	info, err := d.client.Execute(ctx, sql)
+	info, err := d.client.Execute(ctx, query.RawSQL)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
 	}
@@ -71,5 +79,5 @@ func (d *FlightSQLDatasource) query(ctx context.Context, sql string) backend.Dat
 	}
 	defer reader.Release()
 
-	return newQueryDataResponse(reader, sql)
+	return newQueryDataResponse(reader, query)
 }

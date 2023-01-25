@@ -3,6 +3,7 @@ import {formatSQL} from './components/sqlFormatter'
 
 export interface SQLQuery extends DataQuery {
   queryText?: string
+  format?: string
 }
 
 export const DEFAULT_QUERY: Partial<SQLQuery> = {}
@@ -38,3 +39,13 @@ export const sqlLanguageDefinition = {
   id: 'sql',
   formatter: formatSQL,
 }
+
+export enum QueryFormat {
+  Timeseries = 'time_series',
+  Table = 'table',
+}
+
+export const QUERY_FORMAT_OPTIONS = [
+  {label: 'Time series', value: QueryFormat.Timeseries},
+  {label: 'Table', value: QueryFormat.Table},
+]

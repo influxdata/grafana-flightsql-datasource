@@ -13,6 +13,7 @@ import (
 	"github.com/apache/arrow/go/v10/arrow/scalar"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 )
 
 // TODO(brett): Make this configurable. This is an arbitrary value right
@@ -31,41 +32,37 @@ type recordReader interface {
 // [arrow.Record]s.
 //
 // The backend.DataResponse contains a single [data.Frame].
-func newQueryDataResponse(reader recordReader, sql string) backend.DataResponse {
+func newQueryDataResponse(reader recordReader, query *sqlutil.Query) backend.DataResponse {
 	var resp backend.DataResponse
 	frame, err := frameForRecords(reader)
 	if err != nil {
 		resp.Error = err
 	}
-	frame.Meta.ExecutedQueryString = sql
-	frame.Meta.DataTopic = data.DataTopic(sql)
+	frame.Meta.ExecutedQueryString = query.RawSQL
+	frame.Meta.DataTopic = data.DataTopic(query.RawSQL)
 
-	// If the data contains a `time` column of type `timestamp` and at least one
-	// column of type `string`, the resulting table will be converted to wide
-	// format.
-	//
-	// Data Frame Formatting Reference:
-	// - https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#wide-format
-	// - https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/#long-format
-	var (
-		hasTimeField   bool
-		hasStringField bool
-		schema         = reader.Schema()
-	)
-	for _, f := range schema.Fields() {
-		if f.Name == "time" && f.Type.ID() == arrow.TIMESTAMP {
-			hasTimeField = true
-		} else if f.Type.ID() == arrow.STRING {
-			hasStringField = true
+	switch query.Format {
+	case sqlutil.FormatOptionTimeSeries:
+		if _, idx := frame.FieldByName("time"); idx == -1 {
+			resp.Error = fmt.Errorf("no time column found")
+			return resp
 		}
-	}
-	fmt.Println(hasTimeField, hasStringField)
-	if hasTimeField && hasStringField {
-		var err error
-		frame, err = data.LongToWide(frame, nil)
-		if err != nil {
-			resp.Error = err
+
+		if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeLong {
+			var err error
+			frame, err = data.LongToWide(frame, nil)
+			if err != nil {
+				resp.Error = err
+				return resp
+			}
 		}
+	case sqlutil.FormatOptionTable:
+		// No changes to the output. Send it as is.
+	case sqlutil.FormatOptionLogs:
+		// TODO(brett): We need to find out what this actually is and if its
+		// worth supporting. Pass through as "table" for now.
+	default:
+		resp.Error = fmt.Errorf("unsupported format")
 	}
 
 	resp.Frames = data.Frames{frame}
