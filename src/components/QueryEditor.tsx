@@ -123,20 +123,22 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
           }}
         />
       )}
-      <InlineFieldRow style={{flexFlow: 'row', alignItems: 'center'}}>
-        <SegmentSection label="Format As" fill={true}>
-          <Select
-            options={QUERY_FORMAT_OPTIONS}
-            onChange={setFormat}
-            value={query.format}
-            width={15}
-            placeholder="Table"
-          />
-        </SegmentSection>
-        <Button fill="outline" size="md" onClick={() => setIsExpanded(!isExpanded)}>
-          {builderView ? 'Edit SQL' : 'Builder View'}
-        </Button>
-      </InlineFieldRow>
+      <div style={{width: '100%'}}>
+        <InlineFieldRow style={{flexFlow: 'row', alignItems: 'center'}}>
+          <SegmentSection label="Format As" fill={false}>
+            <Select
+              options={QUERY_FORMAT_OPTIONS}
+              onChange={setFormat}
+              value={query.format}
+              width={15}
+              placeholder="Table"
+            />
+          </SegmentSection>
+          <Button style={{marginLeft: '5px'}} fill="outline" size="md" onClick={() => setIsExpanded(!isExpanded)}>
+            {builderView ? 'Edit SQL' : 'Builder View'}
+          </Button>
+        </InlineFieldRow>
+      </div>
     </>
   )
 }

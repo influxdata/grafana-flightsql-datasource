@@ -115,6 +115,7 @@ export function BuilderView({query, datasource, onChange}: any) {
                   className=""
                   onClick={() => addColumns(setColumnValues, columnValues)}
                   width="auto"
+                  style={{marginLeft: '5px'}}
                 >
                   +
                 </InlineLabel>
@@ -143,8 +144,9 @@ export function BuilderView({query, datasource, onChange}: any) {
                 <InlineLabel
                   as="button"
                   className=""
-                  onClick={() => addWheres(whereValues, setWhereValues)}
+                  onClick={() => addWheres(setWhereValues, whereValues)}
                   width="auto"
+                  style={{marginLeft: '5px'}}
                 >
                   +
                 </InlineLabel>
@@ -154,7 +156,7 @@ export function BuilderView({query, datasource, onChange}: any) {
                   as="button"
                   className=""
                   width="auto"
-                  onClick={() => removeWheres(index, whereValues, setWhereValues)}
+                  onClick={() => removeWheres(index, setWhereValues, whereValues)}
                 >
                   -
                 </InlineLabel>
