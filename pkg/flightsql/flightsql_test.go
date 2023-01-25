@@ -27,7 +27,6 @@ func TestQueryData(t *testing.T) {
 
 	cfg := config{
 		Addr:     server.Addr().String(),
-		Database: "sample",
 		Token:    "secret",
 		Secure:   false,
 	}

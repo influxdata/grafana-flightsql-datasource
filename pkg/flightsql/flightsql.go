@@ -24,24 +24,18 @@ var (
 	_ backend.CallResourceHandler   = (*FlightSQLDatasource)(nil)
 )
 
-const mdBucketName = "bucket-name"
-
 type config struct {
-	Addr     string            `json:"host"`
-	Database string            `json:"database"`
-	Metadata map[string]string `json:"metadata"`
-	Secure   bool              `json:"secure"`
-	Username string            `json:"username"`
-	Password string            `json:"password"`
-	Token    string            `json:"token"`
+	Addr     string              `json:"host"`
+	Metadata []map[string]string `json:"metadata"`
+	Secure   bool                `json:"secure"`
+	Username string              `json:"username"`
+	Password string              `json:"password"`
+	Token    string              `json:"token"`
 }
 
 func (cfg config) validate() error {
 	if strings.Count(cfg.Addr, ":") == 0 {
 		return fmt.Errorf(`server address must be in the form "host:port"`)
-	}
-	if len(cfg.Database) == 0 {
-		return fmt.Errorf("database name is required")
 	}
 
 	noToken := len(cfg.Token) == 0
@@ -56,7 +50,6 @@ func (cfg config) validate() error {
 
 // FlightSQLDatasource is a Grafana datasource plugin for Flight SQL.
 type FlightSQLDatasource struct {
-	database        string
 	client          *flightsql.Client
 	resourceHandler backend.CallResourceHandler
 	md              metadata.MD
@@ -65,10 +58,12 @@ type FlightSQLDatasource struct {
 // NewDatasource creates a new datasource instance.
 func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	var cfg config
+
 	err := json.Unmarshal(settings.JSONData, &cfg)
 	if err != nil {
 		return nil, fmt.Errorf("config: %s", err)
 	}
+
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("config validation: %v", err)
 	}
@@ -79,11 +74,14 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 	}
 
 	md := metadata.MD{}
-	for k, v := range cfg.Metadata {
-		md.Set(k, v)
+	for _, m := range cfg.Metadata {
+		for k, v := range m {
+			if _, ok := md[k]; ok {
+				return nil, fmt.Errorf("metadata: duplicate key: %s", k)
+			}
+			md.Set(k, v)
+		}
 	}
-	// TODO(brett): Remove when the UI is completely configurable via metadata.
-	md.Set(mdBucketName, cfg.Database)
 
 	ctx := context.Background()
 	if len(cfg.Username) > 0 || len(cfg.Password) > 0 {
@@ -98,9 +96,8 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 	}
 
 	ds := &FlightSQLDatasource{
-		database: cfg.Database,
-		client:   client,
-		md:       md,
+		client: client,
+		md:     md,
 	}
 	r := chi.NewRouter()
 	r.Use(recoverer)
