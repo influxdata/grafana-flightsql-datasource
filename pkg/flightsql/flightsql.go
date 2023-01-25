@@ -25,12 +25,12 @@ var (
 )
 
 type config struct {
-	Addr     string            `json:"host"`
+	Addr     string              `json:"host"`
 	Metadata []map[string]string `json:"metadata"`
-	Secure   bool              `json:"secure"`
-	Username string            `json:"username"`
-	Password string            `json:"password"`
-	Token    string            `json:"token"`
+	Secure   bool                `json:"secure"`
+	Username string              `json:"username"`
+	Password string              `json:"password"`
+	Token    string              `json:"token"`
 }
 
 func (cfg config) validate() error {
@@ -72,13 +72,16 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 	if err != nil {
 		return nil, fmt.Errorf("flightsql: %s", err)
 	}
-	
+
 	md := metadata.MD{}
 	for _, m := range cfg.Metadata {
-        for k, v := range m {
+		for k, v := range m {
+			if _, ok := md[k]; ok {
+				return nil, fmt.Errorf("metadata: duplicate key: %s", k)
+			}
 			md.Set(k, v)
-        }
-    }
+		}
+	}
 
 	ctx := context.Background()
 	if len(cfg.Username) > 0 || len(cfg.Password) > 0 {
@@ -93,8 +96,8 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 	}
 
 	ds := &FlightSQLDatasource{
-		client:   client,
-		md:       md,
+		client: client,
+		md:     md,
 	}
 	r := chi.NewRouter()
 	r.Use(recoverer)
