@@ -166,7 +166,7 @@ export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider
       ...(language &&
         getStandardSQLCompletionProvider(monaco, {
           ...language,
-          builtinFunctions: sqlInfo.builtinFunctions,
+          builtinFunctions: sqlInfo?.builtinFunctions,
           keywords: sqlInfo.keywords,
         })),
       triggerCharacters: ['.', ' ', '$', ',', '(', "'"],

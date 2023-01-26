@@ -14,10 +14,8 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   const [isExpanded, setIsExpanded] = useState(false)
   const [sqlInfo, setSqlInfo] = useState<any>()
   const [macros, setMacros] = useState<any>()
-  const [builderView, setView] = useState(false)
+  const [builderView, setBuilderView] = useState(true)
   const [format, setFormat] = useState<SelectableValue<string>>()
-
-  console.log('query', query)
 
   useEffect(() => {
     ;(async () => {
@@ -72,15 +70,31 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   )
 
   useEffect(() => {
-    onChange({...query, format: format?.value})
+    // sets the format on the query on dropdown change
+    if (format) {
+      onChange({...query, format: format?.value})
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [format])
 
-  // useEffect(() => {
-  //   setFormat(QUERY_FORMAT_OPTIONS[1])
-  // }, [])
+  useEffect(() => {
+    // get the format off the query on load
+    if (query.format) {
+      setFormat({value: query.format, label: query.format})
+    }
+    // set the default to table
+    // if the user hadn't previously submitted a query with a format
+    if (!query.format) {
+      setFormat(QUERY_FORMAT_OPTIONS[1])
+    }
 
-  console.log('query', query)
+    if (query.queryText) {
+      console.log('in here')
+      setBuilderView(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>
@@ -107,7 +121,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
               variant="destructive"
               onClick={() => {
                 setIsExpanded(!isExpanded)
-                setView(!builderView)
+                setBuilderView(!builderView)
               }}
             >
               Switch
