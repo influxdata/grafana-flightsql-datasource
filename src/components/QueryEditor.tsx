@@ -4,7 +4,7 @@ import {QueryEditorProps, SelectableValue} from '@grafana/data'
 import {MacroType} from '@grafana/experimental'
 import {FlightSQLDataSource} from '../datasource'
 import {FlightSQLDataSourceOptions, SQLQuery, sqlLanguageDefinition, QUERY_FORMAT_OPTIONS} from '../types'
-import {getSqlCompletionProvider} from './utils'
+import {getSqlCompletionProvider, checkCasing} from './utils'
 
 import {QueryEditorRaw} from './QueryEditorRaw'
 import {BuilderView} from './BuilderView'
@@ -43,7 +43,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   const getTables = useCallback(async () => {
     const res = await datasource.getTables()
     return res.frames[0].data.values[2].map((t: string) => ({
-      name: t,
+      name: checkCasing(t),
     }))
   }, [datasource])
 
