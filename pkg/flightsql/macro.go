@@ -13,6 +13,15 @@ var macros = sqlutil.Macros{
 	"interval":       macroInterval,
 	"timeGroup":      macroTimeGroup,
 	"timeGroupAlias": macroTimeGroupAlias,
+
+	// The behaviors of timeFrom and timeTo as defined in the SDK are different
+	// from all other Grafana SQL plugins. Instead we'll take their
+	// implementations, rename them and define timeFrom and timeTo ourselves.
+	"timeRangeFrom": sqlutil.DefaultMacros["timeFrom"],
+	"timeRangeTo":   sqlutil.DefaultMacros["timeTo"],
+	"timeRange":     sqlutil.DefaultMacros["timeFilter"],
+	"timeTo":        macroTo,
+	"timeFrom":      macroFrom,
 }
 
 func macroTimeGroup(query *sqlutil.Query, args []string) (string, error) {
@@ -76,11 +85,11 @@ func macroInterval(query *sqlutil.Query, _ []string) (string, error) {
 }
 
 func macroFrom(query *sqlutil.Query, _ []string) (string, error) {
-	return query.TimeRange.From.Format(time.RFC3339), nil
+	return fmt.Sprintf("cast('%s' as timestamp)", query.TimeRange.From.Format(time.RFC3339)), nil
 }
 
 func macroTo(query *sqlutil.Query, _ []string) (string, error) {
-	return query.TimeRange.To.Format(time.RFC3339), nil
+	return fmt.Sprintf("cast('%s' as timestamp)", query.TimeRange.To.Format(time.RFC3339)), nil
 }
 
 func macroDateBin(suffix string) sqlutil.MacroFunc {
