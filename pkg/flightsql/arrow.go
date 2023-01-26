@@ -38,6 +38,11 @@ func newQueryDataResponse(reader recordReader, query *sqlutil.Query) backend.Dat
 	if err != nil {
 		resp.Error = err
 	}
+	if frame.Rows() == 0 {
+		resp.Frames = data.Frames{}
+		return resp
+	}
+
 	frame.Meta.ExecutedQueryString = query.RawSQL
 	frame.Meta.DataTopic = data.DataTopic(query.RawSQL)
 
