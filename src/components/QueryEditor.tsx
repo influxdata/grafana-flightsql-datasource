@@ -17,6 +17,8 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   const [builderView, setView] = useState(false)
   const [format, setFormat] = useState<SelectableValue<string>>()
 
+  console.log('query', query)
+
   useEffect(() => {
     ;(async () => {
       const res = await datasource.getSQLInfo()
@@ -77,6 +79,8 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   // useEffect(() => {
   //   setFormat(QUERY_FORMAT_OPTIONS[1])
   // }, [])
+
+  console.log('query', query)
 
   return (
     <>
