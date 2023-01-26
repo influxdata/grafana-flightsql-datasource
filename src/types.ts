@@ -4,6 +4,7 @@ import {formatSQL} from './components/sqlFormatter'
 export interface SQLQuery extends DataQuery {
   queryText?: string
   format?: string
+  rawEditor?: boolean
 }
 
 export const DEFAULT_QUERY: Partial<SQLQuery> = {}
