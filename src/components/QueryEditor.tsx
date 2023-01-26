@@ -8,10 +8,12 @@ import {getSqlCompletionProvider, checkCasing} from './utils'
 
 import {QueryEditorRaw} from './QueryEditorRaw'
 import {BuilderView} from './BuilderView'
+import {QueryHelp} from './QueryHelp'
 
 export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuery, FlightSQLDataSourceOptions>) {
   const {onChange, query, datasource} = props
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [warningModal, showWarningModal] = useState(false)
+  const [helpModal, showHelpModal] = useState(false)
   const [sqlInfo, setSqlInfo] = useState<any>()
   const [macros, setMacros] = useState<any>()
   const [builderView, setView] = useState(true)
@@ -80,21 +82,21 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
 
   return (
     <>
-      {isExpanded && (
+      {warningModal && (
         <Modal
           title="Warning"
           closeOnBackdropClick={false}
           closeOnEscape={false}
-          isOpen={isExpanded}
+          isOpen={warningModal}
           onDismiss={() => {
-            setIsExpanded(false)
+            showWarningModal(false)
           }}
         >
           {builderView
             ? 'By switching to the raw sql editor if you click to come back to the builder view you will need to refill your query.'
             : 'By switching to the builder view you will not bring your current raw query over to the builder editor, you will have to fill it out again.'}
           <Modal.ButtonRow>
-            <Button fill="solid" size="md" variant="secondary" onClick={() => setIsExpanded(!isExpanded)}>
+            <Button fill="solid" size="md" variant="secondary" onClick={() => showWarningModal(!warningModal)}>
               Back
             </Button>
             <Button
@@ -102,7 +104,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
               size="md"
               variant="destructive"
               onClick={() => {
-                setIsExpanded(!isExpanded)
+                showWarningModal(!warningModal)
                 setView(!builderView)
               }}
             >
@@ -134,11 +136,15 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
               placeholder="Table"
             />
           </SegmentSection>
-          <Button style={{marginLeft: '5px'}} fill="outline" size="md" onClick={() => setIsExpanded(!isExpanded)}>
+          <Button style={{marginLeft: '5px'}} fill="outline" size="md" onClick={() => showWarningModal(!warningModal)}>
             {builderView ? 'Edit SQL' : 'Builder View'}
+          </Button>
+          <Button style={{marginLeft: '5px'}} fill="outline" size="md" onClick={() => showHelpModal(!helpModal)}>
+            Show Query Help
           </Button>
         </InlineFieldRow>
       </div>
+      {helpModal && <QueryHelp />}
     </>
   )
 }
