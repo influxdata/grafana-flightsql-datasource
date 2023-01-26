@@ -14,7 +14,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   const [isExpanded, setIsExpanded] = useState(false)
   const [sqlInfo, setSqlInfo] = useState<any>()
   const [macros, setMacros] = useState<any>()
-  const [builderView, setView] = useState(true)
+  const [builderView, setView] = useState(false)
   const [format, setFormat] = useState<SelectableValue<string>>()
 
   useEffect(() => {
@@ -74,9 +74,9 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [format])
 
-  useEffect(() => {
-    setFormat(QUERY_FORMAT_OPTIONS[1])
-  }, [])
+  // useEffect(() => {
+  //   setFormat(QUERY_FORMAT_OPTIONS[1])
+  // }, [])
 
   return (
     <>
