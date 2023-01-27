@@ -16,7 +16,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   const [helpModal, showHelpModal] = useState(false)
   const [sqlInfo, setSqlInfo] = useState<any>()
   const [macros, setMacros] = useState<any>()
-  const [builderView, setView] = useState(true)
+  const [rawEditor, setRawEditor] = useState<any>(false)
   const [format, setFormat] = useState<SelectableValue<string>>()
 
   useEffect(() => {
@@ -72,12 +72,40 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   )
 
   useEffect(() => {
-    onChange({...query, format: format?.value})
+    // sets the format on the query on dropdown change
+    if (format) {
+      onChange({...query, format: format?.value})
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [format])
 
   useEffect(() => {
-    setFormat(QUERY_FORMAT_OPTIONS[1])
+    // set the editor on the query
+    onChange({...query, rawEditor: rawEditor})
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawEditor])
+
+  useEffect(() => {
+    // get the format off the query on load
+    if (query.format) {
+      setFormat({value: query.format, label: query.format})
+    }
+    // set the default to table
+    // if the user hadn't previously submitted a query with a format
+    if (!query.format) {
+      setFormat(QUERY_FORMAT_OPTIONS[1])
+    }
+
+    // check if a query has previously been sent from a
+    // specific editor and default to that
+    if (query.rawEditor) {
+      setRawEditor(query.rawEditor)
+    } else {
+      setRawEditor(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
@@ -92,9 +120,9 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
             showWarningModal(false)
           }}
         >
-          {builderView
-            ? 'By switching to the raw sql editor if you click to come back to the builder view you will need to refill your query.'
-            : 'By switching to the builder view you will not bring your current raw query over to the builder editor, you will have to fill it out again.'}
+          {rawEditor
+            ? 'By switching to the builder view you will not bring your current raw query over to the builder editor, you will have to fill it out again.'
+            : 'By switching to the raw sql editor if you click to come back to the builder view you will need to refill your query.'}
           <Modal.ButtonRow>
             <Button fill="solid" size="md" variant="secondary" onClick={() => showWarningModal(!warningModal)}>
               Back
@@ -105,7 +133,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
               variant="destructive"
               onClick={() => {
                 showWarningModal(!warningModal)
-                setView(!builderView)
+                setRawEditor(!rawEditor)
               }}
             >
               Switch
@@ -113,9 +141,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
           </Modal.ButtonRow>
         </Modal>
       )}
-      {builderView ? (
-        <BuilderView query={props.query} datasource={datasource} onChange={onChange} />
-      ) : (
+      {rawEditor ? (
         <QueryEditorRaw
           query={query}
           onChange={onChange}
@@ -124,6 +150,8 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
             completionProvider,
           }}
         />
+      ) : (
+        <BuilderView query={props.query} datasource={datasource} onChange={onChange} />
       )}
       <div style={{width: '100%'}}>
         <InlineFieldRow style={{flexFlow: 'row', alignItems: 'center'}}>
@@ -137,7 +165,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
             />
           </SegmentSection>
           <Button style={{marginLeft: '5px'}} fill="outline" size="md" onClick={() => showWarningModal(!warningModal)}>
-            {builderView ? 'Edit SQL' : 'Builder View'}
+            {rawEditor ? 'Builder View' : 'Edit SQL'}
           </Button>
           <Button style={{marginLeft: '5px'}} fill="outline" size="md" onClick={() => showHelpModal(!helpModal)}>
             Show Query Help
