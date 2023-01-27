@@ -13,7 +13,7 @@
       "name": "InfluxData"
       "url": "https://influxdata.com",
     },
-    "keywords": ["datasource"],
+    "keywords": ["datasource", "apache", "arrow", "flight", "flightsql"],
     "logos": {
       "small": "img/arrow-logo.png",
       "large": "img/arrow-logo.png"
