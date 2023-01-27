@@ -109,6 +109,7 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
         setLimit(query.limit)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   return (
     <>
