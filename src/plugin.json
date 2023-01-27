@@ -10,8 +10,8 @@
   "info": {
     "description": "Query databases that support Flight SQL transport.",
     "author": {
-      "name": "InfluxData"
-      "url": "https://influxdata.com",
+      "name": "InfluxData",
+      "url": "https://influxdata.com"
     },
     "keywords": ["datasource", "apache", "arrow", "flight", "flightsql"],
     "logos": {
