@@ -18,6 +18,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   const [macros, setMacros] = useState<any>()
   const [rawEditor, setRawEditor] = useState<any>(false)
   const [format, setFormat] = useState<SelectableValue<string>>()
+  const [fromRawSql, setFromSql] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -134,6 +135,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
               onClick={() => {
                 showWarningModal(!warningModal)
                 setRawEditor(!rawEditor)
+                setFromSql(rawEditor)
               }}
             >
               Switch
@@ -151,7 +153,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
           }}
         />
       ) : (
-        <BuilderView query={props.query} datasource={datasource} onChange={onChange} />
+        <BuilderView query={props.query} datasource={datasource} onChange={onChange} fromRawSql={fromRawSql} />
       )}
       <div style={{width: '100%'}}>
         <InlineFieldRow style={{flexFlow: 'row', alignItems: 'center'}}>

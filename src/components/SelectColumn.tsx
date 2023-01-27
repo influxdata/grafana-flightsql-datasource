@@ -12,7 +12,7 @@ export const SelectColumn = ({columns, index, setColumn, columnValues, formatCre
     value={columnValues[index].value}
     allowCustomValue={true}
     formatCreateLabel={formatCreateLabel}
-    width={15}
+    width={20}
     placeholder="column"
   />
 )

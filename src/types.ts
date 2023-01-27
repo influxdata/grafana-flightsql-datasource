@@ -5,6 +5,12 @@ export interface SQLQuery extends DataQuery {
   queryText?: string
   format?: string
   rawEditor?: boolean
+  table?: string
+  columns?: string[]
+  wheres?: string[]
+  orderBy?: string
+  groupBy?: string
+  limit?: string
 }
 
 export const DEFAULT_QUERY: Partial<SQLQuery> = {}

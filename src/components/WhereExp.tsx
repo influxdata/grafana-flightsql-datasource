@@ -15,7 +15,7 @@ export const WhereExp = ({index, setWhere, whereValues}: any) => (
       setWhere({value: e.currentTarget.value, index: index})
     }}
     value={whereValues[index].value}
-    width={15}
+    width={20}
     placeholder="value = value"
   />
 )
