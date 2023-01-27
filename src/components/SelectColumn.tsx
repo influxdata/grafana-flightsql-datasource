@@ -11,7 +11,6 @@ export const SelectColumn = ({columns, index, setColumn, columnValues, formatCre
     key={index}
     value={columnValues[index].value}
     allowCustomValue={true}
-    autoFocus={true}
     formatCreateLabel={formatCreateLabel}
     width={15}
     placeholder="column"
