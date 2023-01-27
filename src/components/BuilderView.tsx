@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react'
 import {css} from '@emotion/css'
 
-import {Select, SegmentSection, InlineLabel, Input} from '@grafana/ui'
+import {Select, SegmentSection, InlineLabel, Input, InlineField, InlineSwitch, SegmentInput} from '@grafana/ui'
 import {SelectableValue} from '@grafana/data'
 import {
   GetTables,
@@ -30,6 +30,7 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
   const [columns, setColumns] = useState()
   const [table, setTable] = useState<SelectableValue<string>>()
   const [column, setColumn] = useState<SelectableValue<string>>()
+  const [rawSql, showRawSql] = useState(false)
 
   const {loadingTable, tables, errorTable} = GetTables(datasource)
 
@@ -111,7 +112,23 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
   }, [])
   return (
     <>
-      <div className={selectClass}>
+      <InlineField labelWidth={20} label="Show Raw SQL">
+        <InlineSwitch
+          label=""
+          value={rawSql}
+          onChange={() => {
+            showRawSql(!rawSql)
+          }}
+          showLabel={false}
+          disabled={false}
+        />
+      </InlineField>
+      {rawSql && (
+        <SegmentSection label="Raw Query">
+          <SegmentInput disabled style={{minWidth: '50px'}} value={query.queryText} onChange={() => {}} />
+        </SegmentSection>
+      )}
+      <div className={selectClass} style={{paddingTop: '5px'}}>
         <SegmentSection label="FROM" fill={true}>
           <Select
             options={tables}
