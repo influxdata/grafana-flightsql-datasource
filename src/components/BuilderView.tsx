@@ -112,7 +112,7 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
   }, [])
   return (
     <>
-      <InlineField labelWidth={20} label="Show Raw SQL">
+      <InlineField labelWidth={20} label="Show Query Preview">
         <InlineSwitch
           label=""
           value={rawSql}
@@ -124,7 +124,7 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
         />
       </InlineField>
       {rawSql && (
-        <SegmentSection label="Raw Query">
+        <SegmentSection label="query preview">
           <SegmentInput disabled style={{minWidth: '50px'}} value={query.queryText} onChange={() => {}} />
         </SegmentSection>
       )}
