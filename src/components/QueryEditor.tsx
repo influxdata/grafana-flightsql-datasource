@@ -136,6 +136,9 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
                 showWarningModal(!warningModal)
                 setRawEditor(!rawEditor)
                 setFromSql(rawEditor)
+                if (rawEditor) {
+                  query.queryText = ''
+                }
               }}
             >
               Switch
