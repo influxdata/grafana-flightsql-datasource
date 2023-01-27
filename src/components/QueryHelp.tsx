@@ -14,25 +14,35 @@ export const QueryHelp = () => (
     </div>
     <div>
       <h3>Supported Macros:</h3>
-      <li>$__dateBin(time) -&gt; date_bin(interval '30 second', time, interval '1970-01-01T00:00:00Z')</li>
       <li>
-        $__dateBinAlias(time) -&gt; date_bin(interval '30 second', time, interval '1970-01-01T00:00:00Z') as time_binned
-      </li>
-      <li>$__interval -&gt; interval '30 second'</li>
-      <li>$__timeFilter() -&gt; time &gt;= '2023-01-26T16:24:39Z' AND time &lt;= '2023-01-26T17:24:39Z'</li>
-      <li>$__timeFrom -&gt; cast('2023-01-01T00:00:00Z' as timestamp)</li>
-      <li>
-        $__timeGroup(time, hour) -&gt; datepart('minute', time),datepart('hour', time),datepart('day',
-        time),datepart('month', time),datepart('year', time);
+        $__dateBin(time) -&gt; date_bin(interval &rsquo;30 second&rsquo;, time, interval
+        &rsquo;1970-01-01T00:00:00Z&rsquo;)
       </li>
       <li>
-        $__timeGroupAlias(time, minute) -&gt; datepart('minute', time) as time_minute,datepart('hour', time) as
-        time_hour,datepart('day', time) as time_day,datepart('month', time) as time_month, datepart('year', time) as
-        time_year
+        $__dateBinAlias(time) -&gt; date_bin(interval &rsquo;30 second&rsquo;, time, interval
+        &rsquo;1970-01-01T00:00:00Z&rsquo;) as time_binned
       </li>
-      <li>$__timeRange -&gt; time &gt;= '2023-01 01T00:00:00Z' and time &lt;= '2023-01-01T01:00:00Z'</li>
-      <li>$__timeRangeFrom(time) -&gt; time &gt;= '2023-01-01T00:00:00Z'</li>
-      <li> $__timeRangeTo(time) -&gt; time &lt;= '2023-01-01T01:00:00Z'</li>
+      <li>$__interval -&gt; interval &rsquo;30 second&rsquo;</li>
+      <li>
+        $__timeFilter() -&gt; time &gt;= &rsquo;2023-01-26T16:24:39Z&rsquo; AND time &lt;=
+        &rsquo;2023-01-26T17:24:39Z&rsquo;
+      </li>
+      <li>$__timeFrom -&gt; cast(&rsquo;2023-01-01T00:00:00Z&rsquo; as timestamp)</li>
+      <li>
+        $__timeGroup(time, hour) -&gt; datepart(&rsquo;minute&rsquo;, time),datepart(&rsquo;hour&rsquo;,
+        time),datepart(&rsquo;day&rsquo;, time),datepart(&rsquo;month&rsquo;, time),datepart(&rsquo;year&rsquo;, time);
+      </li>
+      <li>
+        $__timeGroupAlias(time, minute) -&gt; datepart(&rsquo;minute&rsquo;, time) as
+        time_minute,datepart(&rsquo;hour&rsquo;, time) as time_hour,datepart(&rsquo;day&rsquo;, time) as
+        time_day,datepart(&rsquo;month&rsquo;, time) as time_month, datepart(&rsquo;year&rsquo;, time) as time_year
+      </li>
+      <li>
+        $__timeRange -&gt; time &gt;= &rsquo;2023-01 01T00:00:00Z&rsquo; and time &lt;=
+        &rsquo;2023-01-01T01:00:00Z&rsquo;
+      </li>
+      <li>$__timeRangeFrom(time) -&gt; time &gt;= &rsquo;2023-01-01T00:00:00Z&rsquo;</li>
+      <li> $__timeRangeTo(time) -&gt; time &lt;= &rsquo;2023-01-01T01:00:00Z&rsquo;</li>
       <li>$__timeTo(time) -&gt; cast(time as timestamp)</li>
     </div>
   </Alert>
