@@ -1,5 +1,5 @@
 import React, {useState, useMemo, useCallback, useEffect} from 'react'
-import {Button, Modal, SegmentSection, Select, InlineFieldRow} from '@grafana/ui'
+import {Button, Modal, SegmentSection, Select, InlineFieldRow, SegmentInput} from '@grafana/ui'
 import {QueryEditorProps, SelectableValue} from '@grafana/data'
 import {MacroType} from '@grafana/experimental'
 import {FlightSQLDataSource} from '../datasource'
@@ -177,6 +177,15 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
           </Button>
         </InlineFieldRow>
       </div>
+      {!rawEditor && (
+        <div style={{marginTop: '5px'}}>
+          <SegmentSection label="Query Preview">
+            <div style={{fontFamily: 'monospace'}}>
+              <SegmentInput disabled value={query.queryText || ''} onChange={() => {}} />
+            </div>
+          </SegmentSection>{' '}
+        </div>
+      )}
       {helpModal && <QueryHelp />}
     </>
   )

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react'
 import {css} from '@emotion/css'
 
-import {Select, SegmentSection, InlineLabel, Input, InlineField, InlineSwitch, SegmentInput} from '@grafana/ui'
+import {Select, SegmentSection, InlineLabel, Input} from '@grafana/ui'
 import {SelectableValue} from '@grafana/data'
 import {
   GetTables,
@@ -30,7 +30,6 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
   const [columns, setColumns] = useState()
   const [table, setTable] = useState<SelectableValue<string>>()
   const [column, setColumn] = useState<SelectableValue<string>>()
-  const [rawSql, showRawSql] = useState(false)
 
   const {loadingTable, tables, errorTable} = GetTables(datasource)
 
@@ -89,6 +88,7 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
   })
 
   useEffect(() => {
+    // do i need from raw sql anymore or can it be dictated by the presence of query.table instead
     if (!fromRawSql) {
       if (query.table) {
         setTable({value: query.table, label: query.table})
@@ -113,22 +113,6 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
   }, [])
   return (
     <>
-      <InlineField labelWidth={20} label="Show Query Preview">
-        <InlineSwitch
-          label=""
-          value={rawSql}
-          onChange={() => {
-            showRawSql(!rawSql)
-          }}
-          showLabel={false}
-          disabled={false}
-        />
-      </InlineField>
-      {rawSql && (
-        <SegmentSection label="query preview">
-          <SegmentInput disabled style={{minWidth: '50px'}} value={query.queryText} onChange={() => {}} />
-        </SegmentSection>
-      )}
       <div className={selectClass} style={{paddingTop: '5px'}}>
         <SegmentSection label="FROM" fill={true}>
           <Select
