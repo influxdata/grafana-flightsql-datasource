@@ -1,5 +1,5 @@
 import React, {useState, useMemo, useCallback, useEffect} from 'react'
-import {Button, Modal, SegmentSection, Select, InlineFieldRow} from '@grafana/ui'
+import {Button, Modal, SegmentSection, Select, InlineFieldRow, SegmentInput} from '@grafana/ui'
 import {QueryEditorProps, SelectableValue} from '@grafana/data'
 import {MacroType} from '@grafana/experimental'
 import {FlightSQLDataSource} from '../datasource'
@@ -18,6 +18,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
   const [macros, setMacros] = useState<any>()
   const [rawEditor, setRawEditor] = useState<any>(false)
   const [format, setFormat] = useState<SelectableValue<string>>()
+  const [fromRawSql, setFromSql] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -134,6 +135,10 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
               onClick={() => {
                 showWarningModal(!warningModal)
                 setRawEditor(!rawEditor)
+                setFromSql(rawEditor)
+                if (rawEditor) {
+                  query.queryText = ''
+                }
               }}
             >
               Switch
@@ -151,7 +156,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
           }}
         />
       ) : (
-        <BuilderView query={props.query} datasource={datasource} onChange={onChange} />
+        <BuilderView query={props.query} datasource={datasource} onChange={onChange} fromRawSql={fromRawSql} />
       )}
       <div style={{width: '100%'}}>
         <InlineFieldRow style={{flexFlow: 'row', alignItems: 'center'}}>
@@ -172,6 +177,15 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
           </Button>
         </InlineFieldRow>
       </div>
+      {!rawEditor && (
+        <div style={{marginTop: '5px'}}>
+          <SegmentSection label="Query Preview">
+            <div style={{fontFamily: 'monospace', minWidth: '200px'}}>
+              <SegmentInput disabled value={query.queryText || ''} onChange={() => {}} />
+            </div>
+          </SegmentSection>{' '}
+        </div>
+      )}
       {helpModal && <QueryHelp />}
     </>
   )
