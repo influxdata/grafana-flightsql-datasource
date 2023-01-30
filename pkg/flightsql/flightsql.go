@@ -133,7 +133,7 @@ func (d *FlightSQLDatasource) CallResource(ctx context.Context, req *backend.Cal
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (d *FlightSQLDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	query := &sqlutil.Query{
+	query := sqlutil.Query{
 		RawSQL: "select 1",
 		Format: sqlutil.FormatOptionTable,
 	}
@@ -156,7 +156,7 @@ func recoverer(next http.Handler) http.Handler {
 				if rec == http.ErrAbortHandler {
 					panic(rec)
 				}
-				logErrorf("Panic: %v %v", r, string(debug.Stack()))
+				logErrorf("Panic: %s %s", rec, string(debug.Stack()))
 				w.WriteHeader(http.StatusInternalServerError)
 			}
 		}()

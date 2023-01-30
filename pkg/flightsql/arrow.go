@@ -32,7 +32,7 @@ type recordReader interface {
 // [arrow.Record]s.
 //
 // The backend.DataResponse contains a single [data.Frame].
-func newQueryDataResponse(reader recordReader, query *sqlutil.Query) backend.DataResponse {
+func newQueryDataResponse(reader recordReader, query sqlutil.Query) backend.DataResponse {
 	var resp backend.DataResponse
 	frame, err := frameForRecords(reader)
 	if err != nil {
@@ -180,7 +180,7 @@ func newFrame(schema *arrow.Schema) *data.Frame {
 func copyData(field *data.Field, col arrow.Array) error {
 	defer func() {
 		if r := recover(); r != nil {
-			logErrorf("Panic: %v %v", r, string(debug.Stack()))
+			logErrorf("Panic: %s %s", r, string(debug.Stack()))
 		}
 	}()
 
