@@ -20,7 +20,7 @@ import {
 import {SelectColumn} from './SelectColumn'
 import {WhereExp} from './WhereExp'
 
-export function BuilderView({query, datasource, onChange}: any) {
+export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
   const [columnValues, setColumnValues] = useState([{value: ''}])
   const [whereValues, setWhereValues] = useState([{value: ''}])
   const [groupBy, setGroupBy] = useState('')
@@ -49,12 +49,22 @@ export function BuilderView({query, datasource, onChange}: any) {
   }, [table, datasource])
 
   useEffect(() => {
-    if (table && column) {
+    // in the case where its loaded on refresh there is no column
+    if (table && (column || columnValues)) {
       const selectColumns = formatColumns(columnValues)
       const casedTable = checkCasing(table.value || '')
       const whereExps = formatWheres(whereValues)
       const queryText = buildQueryString(selectColumns, casedTable, whereExps, orderBy, groupBy, limit)
-      onChange({...query, queryText: queryText})
+      onChange({
+        ...query,
+        queryText: queryText,
+        table: casedTable,
+        columns: columnValues,
+        wheres: whereValues,
+        orderBy: orderBy,
+        groupBy: groupBy,
+        limit: limit,
+      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, columnValues, groupBy, whereValues, orderBy, limit, column])
@@ -73,16 +83,36 @@ export function BuilderView({query, datasource, onChange}: any) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [where])
 
-  useEffect(() => {
-    setColumnValues([{value: ''}])
-  }, [table])
-
   const selectClass = css({
     minWidth: '160px',
   })
+
+  useEffect(() => {
+    if (!fromRawSql) {
+      if (query.table) {
+        setTable({value: query.table, label: query.table})
+      }
+      if (query.columns) {
+        setColumnValues(query.columns)
+      }
+      if (query.wheres) {
+        setWhereValues(query.wheres)
+      }
+      if (query.groupBy) {
+        setGroupBy(query.groupBy)
+      }
+      if (query.orderBy) {
+        setOrderBy(query.orderBy)
+      }
+      if (query.limit) {
+        setLimit(query.limit)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   return (
     <>
-      <div className={selectClass}>
+      <div className={selectClass} style={{paddingTop: '5px'}}>
         <SegmentSection label="FROM" fill={true}>
           <Select
             options={tables}
@@ -93,7 +123,7 @@ export function BuilderView({query, datasource, onChange}: any) {
             allowCustomValue={true}
             autoFocus={true}
             formatCreateLabel={formatCreateLabel}
-            width={15}
+            width={20}
             placeholder="table"
           />
         </SegmentSection>
@@ -168,7 +198,6 @@ export function BuilderView({query, datasource, onChange}: any) {
       <div className={selectClass}>
         <SegmentSection label="GROUP BY" fill={true}>
           <Input
-            autoFocus
             type="text"
             spellCheck={false}
             onBlur={() => {}}
@@ -181,7 +210,7 @@ export function BuilderView({query, datasource, onChange}: any) {
               setGroupBy(e.currentTarget.value)
             }}
             value={groupBy}
-            width={15}
+            width={20}
             placeholder="(optional)"
           />
         </SegmentSection>
@@ -189,7 +218,6 @@ export function BuilderView({query, datasource, onChange}: any) {
       <div className={selectClass}>
         <SegmentSection label="ORDER BY" fill={true}>
           <Input
-            autoFocus
             type="text"
             spellCheck={false}
             onBlur={() => {}}
@@ -202,7 +230,7 @@ export function BuilderView({query, datasource, onChange}: any) {
               setOrderBy(e.currentTarget.value)
             }}
             value={orderBy}
-            width={15}
+            width={20}
             placeholder="(optional)"
           />
         </SegmentSection>
@@ -210,7 +238,6 @@ export function BuilderView({query, datasource, onChange}: any) {
       <div className={selectClass}>
         <SegmentSection label="LIMIT" fill={true}>
           <Input
-            autoFocus
             type="text"
             spellCheck={false}
             onBlur={() => {}}
@@ -223,7 +250,7 @@ export function BuilderView({query, datasource, onChange}: any) {
               setLimit(e.currentTarget.value)
             }}
             value={limit}
-            width={15}
+            width={20}
             placeholder="(optional)"
           />
         </SegmentSection>
