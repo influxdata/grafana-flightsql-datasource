@@ -30,16 +30,6 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
 
   useEffect(() => {
     const {onOptionsChange, options} = props
-    const jsonData = {
-      ...options.jsonData,
-      secure: true,
-    }
-    onOptionsChange({...options, jsonData})
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
-    const {onOptionsChange, options} = props
     const mapData = metaDataArr?.map((m: any) => ({[m.key]: m.value}))
     const jsonData = {
       ...options.jsonData,

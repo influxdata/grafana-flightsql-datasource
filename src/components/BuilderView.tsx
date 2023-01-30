@@ -88,7 +88,6 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
   })
 
   useEffect(() => {
-    // do i need from raw sql anymore or can it be dictated by the presence of query.table instead
     if (!fromRawSql) {
       if (query.table) {
         setTable({value: query.table, label: query.table})

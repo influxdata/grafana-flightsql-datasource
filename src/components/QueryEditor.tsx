@@ -180,7 +180,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
       {!rawEditor && (
         <div style={{marginTop: '5px'}}>
           <SegmentSection label="Query Preview">
-            <div style={{fontFamily: 'monospace'}}>
+            <div style={{fontFamily: 'monospace', minWidth: '200px'}}>
               <SegmentInput disabled value={query.queryText || ''} onChange={() => {}} />
             </div>
           </SegmentSection>{' '}
