@@ -8,16 +8,22 @@
   "alerting": true,
   "executable": "gpx_flightsql_datasource",
   "info": {
-    "description": "",
+    "description": "Query databases that support Flight SQL transport.",
     "author": {
-      "name": "Grafana"
+      "name": "InfluxData",
+      "url": "https://influxdata.com"
     },
-    "keywords": ["datasource"],
+    "keywords": ["datasource", "apache", "arrow", "flight", "flightsql"],
     "logos": {
       "small": "img/arrow-logo.png",
       "large": "img/arrow-logo.png"
     },
-    "links": [],
+    "links": [
+      {
+        "name": "Website",
+        "url": "https://github.com/influxdata/grafana-flightsql-datasource"
+      }
+    ],
     "screenshots": [],
     "version": "%VERSION%",
     "updated": "%TODAY%"
