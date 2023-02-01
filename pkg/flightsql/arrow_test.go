@@ -21,26 +21,59 @@ func TestNewQueryDataResponse(t *testing.T) {
 	alloc := memory.DefaultAllocator
 	schema := arrow.NewSchema(
 		[]arrow.Field{
-			{Name: "f1-i64", Type: arrow.PrimitiveTypes.Int64},
-			{Name: "f2-f64", Type: arrow.PrimitiveTypes.Float64},
+			{Name: "i8", Type: arrow.PrimitiveTypes.Int8},
+			{Name: "i16", Type: arrow.PrimitiveTypes.Int16},
+			{Name: "i32", Type: arrow.PrimitiveTypes.Int32},
+			{Name: "i64", Type: arrow.PrimitiveTypes.Int64},
+
+			{Name: "u8", Type: arrow.PrimitiveTypes.Uint8},
+			{Name: "u16", Type: arrow.PrimitiveTypes.Uint16},
+			{Name: "u32", Type: arrow.PrimitiveTypes.Uint32},
+			{Name: "u64", Type: arrow.PrimitiveTypes.Uint64},
+
+			{Name: "f32", Type: arrow.PrimitiveTypes.Float32},
+			{Name: "f64", Type: arrow.PrimitiveTypes.Float64},
+
+			{Name: "utf8", Type: &arrow.StringType{}},
+			{Name: "duration", Type: &arrow.DurationType{}},
+			{Name: "timestamp", Type: &arrow.TimestampType{}},
 		},
 		nil,
 	)
 
-	i64s, _, err := array.FromJSON(
-		alloc,
-		&arrow.Int64Type{},
-		strings.NewReader(`[1, 2, 3]`),
-	)
-	require.NoError(t, err)
-	f64s, _, err := array.FromJSON(
-		alloc,
-		&arrow.Float64Type{},
-		strings.NewReader(`[1.1, 2.2, 3.3]`),
-	)
-	require.NoError(t, err)
+	strValues := []jsonArray{
+		newJSONArray(`[1, -2, 3]`, arrow.PrimitiveTypes.Int8),
+		newJSONArray(`[1, -2, 3]`, arrow.PrimitiveTypes.Int16),
+		newJSONArray(`[1, -2, 3]`, arrow.PrimitiveTypes.Int32),
+		newJSONArray(`[1, -2, 3]`, arrow.PrimitiveTypes.Int64),
 
-	record := array.NewRecord(schema, []arrow.Array{i64s, f64s}, -1)
+		newJSONArray(`[1, 2, 3]`, arrow.PrimitiveTypes.Uint8),
+		newJSONArray(`[1, 2, 3]`, arrow.PrimitiveTypes.Uint16),
+		newJSONArray(`[1, 2, 3]`, arrow.PrimitiveTypes.Uint32),
+		newJSONArray(`[1, 2, 3]`, arrow.PrimitiveTypes.Uint64),
+
+		newJSONArray(`[1.1, -2.2, 3.0]`, arrow.PrimitiveTypes.Float32),
+		newJSONArray(`[1.1, -2.2, 3.0]`, arrow.PrimitiveTypes.Float64),
+
+		newJSONArray(`["foo", "bar", "baz"]`, &arrow.StringType{}),
+		newJSONArray(`[0, 1, -2]`, &arrow.DurationType{}),
+		newJSONArray(`[0, 1, 2]`, &arrow.TimestampType{}),
+	}
+
+	var arr []arrow.Array
+	for _, v := range strValues {
+		tarr, _, err := array.FromJSON(
+			alloc,
+			v.dt,
+			strings.NewReader(v.json),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		arr = append(arr, tarr)
+	}
+
+	record := array.NewRecord(schema, arr, -1)
 	records := []arrow.Record{record}
 	reader, err := array.NewRecordReader(schema, records)
 	require.NoError(t, err)
@@ -49,18 +82,89 @@ func TestNewQueryDataResponse(t *testing.T) {
 	resp := newQueryDataResponse(errReader{RecordReader: reader}, query)
 	require.NoError(t, resp.Error)
 	require.Len(t, resp.Frames, 1)
-	require.Len(t, resp.Frames[0].Fields, 2)
+	require.Len(t, resp.Frames[0].Fields, 13)
 
 	frame := resp.Frames[0]
-	field0 := frame.Fields[0]
-	assert.Equal(t, field0.Name, "f1-i64")
-	assert.Equal(t, field0.Type(), data.FieldTypeInt64)
-	assert.Equal(t, []any{int64(1), int64(2), int64(3)}, extractFieldValues(field0))
+	f0 := frame.Fields[0]
+	assert.Equal(t, f0.Name, "i8")
+	assert.Equal(t, f0.Type(), data.FieldTypeInt8)
+	assert.Equal(t, []int8{1, -2, 3}, extractFieldValues[int8](t, f0))
 
-	field1 := frame.Fields[1]
-	assert.Equal(t, field1.Name, "f2-f64")
-	assert.Equal(t, field1.Type(), data.FieldTypeFloat64)
-	assert.Equal(t, []any{1.1, 2.2, 3.3}, extractFieldValues(field1))
+	f1 := frame.Fields[1]
+	assert.Equal(t, f1.Name, "i16")
+	assert.Equal(t, f1.Type(), data.FieldTypeInt16)
+	assert.Equal(t, []int16{1, -2, 3}, extractFieldValues[int16](t, f1))
+
+	f2 := frame.Fields[2]
+	assert.Equal(t, f2.Name, "i32")
+	assert.Equal(t, f2.Type(), data.FieldTypeInt32)
+	assert.Equal(t, []int32{1, -2, 3}, extractFieldValues[int32](t, f2))
+
+	f3 := frame.Fields[3]
+	assert.Equal(t, f3.Name, "i64")
+	assert.Equal(t, f3.Type(), data.FieldTypeInt64)
+	assert.Equal(t, []int64{1, -2, 3}, extractFieldValues[int64](t, f3))
+
+	f4 := frame.Fields[4]
+	assert.Equal(t, f4.Name, "u8")
+	assert.Equal(t, f4.Type(), data.FieldTypeUint8)
+	assert.Equal(t, []uint8{1, 2, 3}, extractFieldValues[uint8](t, f4))
+
+	f5 := frame.Fields[5]
+	assert.Equal(t, f5.Name, "u16")
+	assert.Equal(t, f5.Type(), data.FieldTypeUint16)
+	assert.Equal(t, []uint16{1, 2, 3}, extractFieldValues[uint16](t, f5))
+
+	f6 := frame.Fields[6]
+	assert.Equal(t, f6.Name, "u32")
+	assert.Equal(t, f6.Type(), data.FieldTypeUint32)
+	assert.Equal(t, []uint32{1, 2, 3}, extractFieldValues[uint32](t, f6))
+
+	f7 := frame.Fields[7]
+	assert.Equal(t, f7.Name, "u64")
+	assert.Equal(t, f7.Type(), data.FieldTypeUint64)
+	assert.Equal(t, []uint64{1, 2, 3}, extractFieldValues[uint64](t, f7))
+
+	f8 := frame.Fields[8]
+	assert.Equal(t, f8.Name, "f32")
+	assert.Equal(t, f8.Type(), data.FieldTypeFloat32)
+	assert.Equal(t, []float32{1.1, -2.2, 3.0}, extractFieldValues[float32](t, f8))
+
+	f9 := frame.Fields[9]
+	assert.Equal(t, f9.Name, "f64")
+	assert.Equal(t, f9.Type(), data.FieldTypeFloat64)
+	assert.Equal(t, []float64{1.1, -2.2, 3.0}, extractFieldValues[float64](t, f9))
+
+	f10 := frame.Fields[10]
+	assert.Equal(t, f10.Name, "utf8")
+	assert.Equal(t, f10.Type(), data.FieldTypeString)
+	assert.Equal(t, []string{"foo", "bar", "baz"}, extractFieldValues[string](t, f10))
+
+	f11 := frame.Fields[11]
+	assert.Equal(t, f11.Name, "duration")
+	assert.Equal(t, f11.Type(), data.FieldTypeInt64)
+	assert.Equal(t, []int64{0, 1, -2}, extractFieldValues[int64](t, f11))
+
+	f12 := frame.Fields[12]
+	assert.Equal(t, f12.Name, "timestamp")
+	assert.Equal(t, f12.Type(), data.FieldTypeTime)
+	assert.Equal(t,
+		[]time.Time{
+			time.Unix(0, 0).UTC(),
+			time.Unix(0, 1).UTC(),
+			time.Unix(0, 2).UTC(),
+		},
+		extractFieldValues[time.Time](t, f12),
+	)
+}
+
+type jsonArray struct {
+	json string
+	dt   arrow.DataType
+}
+
+func newJSONArray(json string, dt arrow.DataType) jsonArray {
+	return jsonArray{json: json, dt: dt}
 }
 
 func TestNewQueryDataResponse_Error(t *testing.T) {
@@ -148,23 +252,25 @@ func TestNewQueryDataResponse_WideTable(t *testing.T) {
 	// label=bar
 	assert.Equal(t, "value", frame.Fields[1].Name)
 	assert.Equal(t, data.Labels{"label": "bar"}, frame.Fields[1].Labels)
-	assert.Equal(t, []any{int64(0), int64(2), int64(0)}, extractFieldValues(frame.Fields[1]))
+	assert.Equal(t, []int64{0, 2, 0}, extractFieldValues[int64](t, frame.Fields[1]))
 
 	// label=baz
 	assert.Equal(t, "value", frame.Fields[2].Name)
 	assert.Equal(t, data.Labels{"label": "baz"}, frame.Fields[2].Labels)
-	assert.Equal(t, []any{int64(0), int64(0), int64(3)}, extractFieldValues(frame.Fields[2]))
+	assert.Equal(t, []int64{0, 0, 3}, extractFieldValues[int64](t, frame.Fields[2]))
 
 	// label=foo
 	assert.Equal(t, "value", frame.Fields[3].Name)
 	assert.Equal(t, data.Labels{"label": "foo"}, frame.Fields[3].Labels)
-	assert.Equal(t, []any{int64(1), int64(0), int64(0)}, extractFieldValues(frame.Fields[3]))
+	assert.Equal(t, []int64{1, 0, 0}, extractFieldValues[int64](t, frame.Fields[3]))
 }
 
-func extractFieldValues(field *data.Field) []any {
-	values := make([]any, 0, field.Len())
+func extractFieldValues[T any](t *testing.T, field *data.Field) []T {
+	t.Helper()
+
+	values := make([]T, 0, field.Len())
 	for i := 0; i < cap(values); i++ {
-		values = append(values, field.CopyAt(i))
+		values = append(values, field.CopyAt(i).(T))
 	}
 	return values
 }

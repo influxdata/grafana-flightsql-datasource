@@ -111,69 +111,54 @@ func newFrame(schema *arrow.Schema) *data.Frame {
 		Fields: make([]*data.Field, len(fields)),
 		Meta:   &data.FrameMeta{},
 	}
-	nullable := make([]bool, len(fields))
-	for i, field := range fields {
-		nullable[i] = field.Nullable
-		switch field.Type.ID() {
-		case arrow.STRING:
-			if field.Nullable {
-				var s []*string
-				df.Fields[i] = data.NewField(field.Name, nil, s)
-				continue
-			}
-			var s []string
-			df.Fields[i] = data.NewField(field.Name, nil, s)
-		case arrow.FLOAT64:
-			if field.Nullable {
-				var s []*float64
-				df.Fields[i] = data.NewField(field.Name, nil, s)
-				continue
-			}
-			var s []float64
-			df.Fields[i] = data.NewField(field.Name, nil, s)
-		case arrow.UINT32:
-			if field.Nullable {
-				var s []*uint32
-				df.Fields[i] = data.NewField(field.Name, nil, s)
-				continue
-			}
-			var s []uint32
-			df.Fields[i] = data.NewField(field.Name, nil, s)
-		case arrow.INT64:
-			if field.Nullable {
-				var s []*int64
-				df.Fields[i] = data.NewField(field.Name, nil, s)
-				continue
-			}
-			var s []int64
-			df.Fields[i] = data.NewField(field.Name, nil, s)
-		case arrow.BOOL:
-			if field.Nullable {
-				var s []*bool
-				df.Fields[i] = data.NewField(field.Name, nil, s)
-				continue
-			}
-			var s []bool
-			df.Fields[i] = data.NewField(field.Name, nil, s)
-		case arrow.TIMESTAMP:
-			if field.Nullable {
-				var s []*time.Time
-				df.Fields[i] = data.NewField(field.Name, nil, s)
-				continue
-			}
-			var s []time.Time
-			df.Fields[i] = data.NewField(field.Name, nil, s)
-		case arrow.DENSE_UNION:
-			if field.Nullable {
-				var s []*json.RawMessage
-				df.Fields[i] = data.NewField(field.Name, nil, s)
-				continue
-			}
-			var s []json.RawMessage
-			df.Fields[i] = data.NewField(field.Name, nil, s)
-		}
+	for i, f := range fields {
+		df.Fields[i] = newField(f)
 	}
 	return df
+}
+
+func newField(f arrow.Field) *data.Field {
+	switch f.Type.ID() {
+	case arrow.STRING:
+		return newDataField[string](f)
+	case arrow.FLOAT32:
+		return newDataField[float32](f)
+	case arrow.FLOAT64:
+		return newDataField[float64](f)
+	case arrow.UINT8:
+		return newDataField[uint8](f)
+	case arrow.UINT16:
+		return newDataField[uint16](f)
+	case arrow.UINT32:
+		return newDataField[uint32](f)
+	case arrow.UINT64:
+		return newDataField[uint64](f)
+	case arrow.INT8:
+		return newDataField[int8](f)
+	case arrow.INT16:
+		return newDataField[int16](f)
+	case arrow.INT32:
+		return newDataField[int32](f)
+	case arrow.INT64:
+		return newDataField[int64](f)
+	case arrow.BOOL:
+		return newDataField[bool](f)
+	case arrow.TIMESTAMP:
+		return newDataField[time.Time](f)
+	case arrow.DURATION:
+		return newDataField[int64](f)
+	default:
+		return newDataField[json.RawMessage](f)
+	}
+}
+
+func newDataField[T any](f arrow.Field) *data.Field {
+	if f.Nullable {
+		var s []*T
+		return data.NewField(f.Name, nil, s)
+	}
+	var s []T
+	return data.NewField(f.Name, nil, s)
 }
 
 // copyData copies the contents of an Arrow column into a Data Frame field.
@@ -184,85 +169,12 @@ func copyData(field *data.Field, col arrow.Array) error {
 		}
 	}()
 
+	data := col.Data()
+
 	switch col.DataType().ID() {
-	case arrow.STRING:
-		v := array.NewStringData(col.Data())
-		for i := 0; i < col.Len(); i++ {
-			if field.Nullable() {
-				if v.IsNull(i) {
-					var s *string
-					field.Append(s)
-					continue
-				}
-				s := v.Value(i)
-				field.Append(&s)
-				continue
-			}
-			field.Append(v.Value(i))
-		}
-	case arrow.UINT32:
-		v := array.NewUint32Data(col.Data())
-		for i := 0; i < col.Len(); i++ {
-			if field.Nullable() {
-				if v.IsNull(i) {
-					var s *uint32
-					field.Append(s)
-					continue
-				}
-				s := v.Value(i)
-				field.Append(&s)
-				continue
-			}
-			field.Append(v.Value(i))
-		}
-	case arrow.INT64:
-		v := array.NewInt64Data(col.Data())
-		for i := 0; i < col.Len(); i++ {
-			if field.Nullable() {
-				if v.IsNull(i) {
-					var s *int64
-					field.Append(s)
-					continue
-				}
-				s := v.Value(i)
-				field.Append(&s)
-				continue
-			}
-			field.Append(v.Value(i))
-		}
-	case arrow.FLOAT64:
-		v := array.NewFloat64Data(col.Data())
-		for i := 0; i < col.Len(); i++ {
-			if field.Nullable() {
-				if v.IsNull(i) {
-					var f *float64
-					field.Append(f)
-					continue
-				}
-				f := v.Value(i)
-				field.Append(&f)
-				continue
-			}
-			field.Append(v.Value(i))
-		}
-	case arrow.BOOL:
-		v := array.NewBooleanData(col.Data())
-		for i := 0; i < col.Len(); i++ {
-			if field.Nullable() {
-				if v.IsNull(i) {
-					var b *bool
-					field.Append(b)
-					continue
-				}
-				b := v.Value(i)
-				field.Append(&b)
-				continue
-			}
-			field.Append(v.Value(i))
-		}
 	case arrow.TIMESTAMP:
-		v := array.NewTimestampData(col.Data())
-		for i := 0; i < col.Len(); i++ {
+		v := array.NewTimestampData(data)
+		for i := 0; i < v.Len(); i++ {
 			if field.Nullable() {
 				if v.IsNull(i) {
 					var t *time.Time
@@ -276,8 +188,8 @@ func copyData(field *data.Field, col arrow.Array) error {
 			field.Append(v.Value(i).ToTime(arrow.Nanosecond))
 		}
 	case arrow.DENSE_UNION:
-		v := array.NewDenseUnionData(col.Data())
-		for i := 0; i < col.Len(); i++ {
+		v := array.NewDenseUnionData(data)
+		for i := 0; i < v.Len(); i++ {
 			sc, err := scalar.GetScalar(v, i)
 			if err != nil {
 				return err
@@ -303,7 +215,55 @@ func copyData(field *data.Field, col arrow.Array) error {
 			}
 			field.Append(json.RawMessage(b))
 		}
+	case arrow.STRING:
+		copyBasic[string](field, array.NewStringData(data))
+	case arrow.UINT8:
+		copyBasic[uint8](field, array.NewUint8Data(data))
+	case arrow.UINT16:
+		copyBasic[uint16](field, array.NewUint16Data(data))
+	case arrow.UINT32:
+		copyBasic[uint32](field, array.NewUint32Data(data))
+	case arrow.UINT64:
+		copyBasic[uint64](field, array.NewUint64Data(data))
+	case arrow.INT8:
+		copyBasic[int8](field, array.NewInt8Data(data))
+	case arrow.INT16:
+		copyBasic[int16](field, array.NewInt16Data(data))
+	case arrow.INT32:
+		copyBasic[int32](field, array.NewInt32Data(data))
+	case arrow.INT64:
+		copyBasic[int64](field, array.NewInt64Data(data))
+	case arrow.FLOAT32:
+		copyBasic[float32](field, array.NewFloat32Data(data))
+	case arrow.FLOAT64:
+		copyBasic[float64](field, array.NewFloat64Data(data))
+	case arrow.BOOL:
+		copyBasic[bool](field, array.NewBooleanData(data))
+	case arrow.DURATION:
+		copyBasic[int64](field, array.NewInt64Data(data))
 	}
 
 	return nil
+}
+
+type arrowArray[T any] interface {
+	IsNull(int) bool
+	Value(int) T
+	Len() int
+}
+
+func copyBasic[T any, Array arrowArray[T]](dst *data.Field, src Array) {
+	for i := 0; i < src.Len(); i++ {
+		if dst.Nullable() {
+			if src.IsNull(i) {
+				var s *T
+				dst.Append(s)
+				continue
+			}
+			s := src.Value(i)
+			dst.Append(&s)
+			continue
+		}
+		dst.Append(src.Value(i))
+	}
 }
