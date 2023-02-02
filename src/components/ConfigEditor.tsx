@@ -124,7 +124,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
                 type="text"
                 value={metaDataArr[i].key || ''}
                 placeholder="key"
-                onChange={(e) => onKeyChange(e, options, onOptionsChange, metaDataArr, i, setMetaData)}
+                onChange={(e) => onKeyChange(e, metaDataArr, i, setMetaData)}
               ></Input>
             </InlineField>
             <InlineField labelWidth={20} label="Value">
@@ -135,7 +135,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
                 type="text"
                 value={metaDataArr[i].value || ''}
                 placeholder="value"
-                onChange={(e) => onValueChange(e, options, onOptionsChange, metaDataArr, i, setMetaData)}
+                onChange={(e) => onValueChange(e, metaDataArr, i, setMetaData)}
               ></Input>
             </InlineField>
             {i + 1 >= metaDataArr.length && (
