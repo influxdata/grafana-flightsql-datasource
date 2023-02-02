@@ -17,7 +17,7 @@ export class FlightSQLDataSource extends DataSourceWithBackend<SQLQuery, FlightS
 
   interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
     if (typeof value === 'string') {
-      if (variable.multi || variable.includeAll) {
+      if (variable?.multi || variable?.includeAll) {
         return this.quoteLiteral(value)
       } else {
         return String(value).replace(/'/g, "''")

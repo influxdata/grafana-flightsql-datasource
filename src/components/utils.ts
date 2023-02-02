@@ -192,27 +192,13 @@ export const removeMetaData = (i: any, setMetaData: any, metaDataArr: any) => {
   setMetaData(newMetaValues)
 }
 
-export const onKeyChange = (
-  event: any,
-  options: any,
-  onOptionsChange: any,
-  metaDataArr: any,
-  index: any,
-  setMetaData: any
-) => {
+export const onKeyChange = (event: any, metaDataArr: any, index: any, setMetaData: any) => {
   let newMetaValues = [...metaDataArr]
   newMetaValues[index]['key'] = event.target.value
   setMetaData(newMetaValues)
 }
 
-export const onValueChange = (
-  event: any,
-  options: any,
-  onOptionsChange: any,
-  metaDataArr: any,
-  index: any,
-  setMetaData: any
-) => {
+export const onValueChange = (event: any, metaDataArr: any, index: any, setMetaData: any) => {
   let newMetaValues = [...metaDataArr]
   newMetaValues[index]['value'] = event.target.value
   setMetaData(newMetaValues)
