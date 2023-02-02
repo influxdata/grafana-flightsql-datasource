@@ -33,7 +33,6 @@ describe('FlightSQL utils', () => {
     it('should return quotes where text is camel cased', () => {
       let str = 'camelCase'
       str = checkCasing(str)
-      console.log('jere', str)
       expect(str).toBe('"camelCase"')
     })
     it('should not alter string if not camel cased', () => {
