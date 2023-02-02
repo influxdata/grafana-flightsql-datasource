@@ -131,7 +131,7 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
       <div className={selectClass}>
         <SegmentSection label="SELECT" fill={true}>
           {columnValues.map((_, index) => (
-            <>
+            <div key={index}>
               <SelectColumn
                 columns={columns}
                 setColumn={setColumn}
@@ -161,14 +161,14 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
                   -
                 </InlineLabel>
               )}
-            </>
+            </div>
           ))}
         </SegmentSection>
       </div>
       <div className={selectClass}>
         <SegmentSection label="WHERE" fill={true}>
           {whereValues.map((_, index) => (
-            <>
+            <div key={index}>
               <WhereExp index={index} setWhere={setWhere} whereValues={whereValues} />
               {index + 1 >= whereValues.length && (
                 <InlineLabel
@@ -191,7 +191,7 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
                   -
                 </InlineLabel>
               )}
-            </>
+            </div>
           ))}
         </SegmentSection>
       </div>
