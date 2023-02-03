@@ -9,13 +9,13 @@ This is a plugin for Grafana that enables queries to Flight SQL APIs.
 Download the latest release:
 
 ```sh
-$ curl -L https://github.com/influxdata/grafana-flightsql-datasource/releases/download/v0.1.0/influxdata-flightsql-datasource-0.1.0.zip
+$ curl -L https://github.com/influxdata/grafana-flightsql-datasource/releases/download/v0.1.0/influxdata-flightsql-datasource-0.1.1.zip
 ```
 
 Unzip the release into your Grafana plugins directory:
 
 ```
-$ unzip influxdata-flightsql-datasource-0.1.0.zip -d grafana-plugins/
+$ unzip influxdata-flightsql-datasource-0.1.1.zip -d grafana-plugins/
 ```
 
 ### Configuration
