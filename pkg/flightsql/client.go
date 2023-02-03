@@ -29,7 +29,6 @@ func grpcDialOptions(cfg config) ([]grpc.DialOption, error) {
 	}
 
 	opts := []grpc.DialOption{
-		grpc.WithBlock(),
 		transport,
 	}
 
