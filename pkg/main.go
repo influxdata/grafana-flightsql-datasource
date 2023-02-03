@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/grafana/flight-datasource/pkg/flightsql"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/influxdata/grafana-flightsql-datasource/pkg/flightsql"
 )
 
 func main() {
