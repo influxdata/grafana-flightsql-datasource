@@ -16,6 +16,7 @@ import {
   formatColumns,
   formatWheres,
   formatCreateLabel,
+  prefixDB,
 } from './utils'
 import {SelectColumn} from './SelectColumn'
 import {WhereExp} from './WhereExp'
@@ -53,8 +54,9 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
     if (table && (column || columnValues)) {
       const selectColumns = formatColumns(columnValues)
       const casedTable = checkCasing(table.value || '')
+      const prefixDBSchema = prefixDB(casedTable, table?.dbSchema)
       const whereExps = formatWheres(whereValues)
-      const queryText = buildQueryString(selectColumns, casedTable, whereExps, orderBy, groupBy, limit)
+      const queryText = buildQueryString(selectColumns, prefixDBSchema, whereExps, orderBy, groupBy, limit)
       onChange({
         ...query,
         queryText: queryText,
