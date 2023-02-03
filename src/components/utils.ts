@@ -12,10 +12,22 @@ type AsyncTablesState = {
 export const GetTables = (datasource: FlightSQLDataSource): AsyncTablesState => {
   const result = useAsync(async () => {
     const res = await datasource.getTables()
-    return res.frames[0].data.values[2].map((t: string) => ({
+
+    const dbSchemaArr = res.frames[0].data.values[1].map((t: string) => ({
+      dbSchema: t,
+    }))
+
+    const tableArr = res.frames[0].data.values[2].map((t: string) => ({
       label: t,
       value: t,
     }))
+
+    const mergedArr = dbSchemaArr.map((obj: any, index: string | number) => ({
+      ...obj,
+      ...tableArr[index],
+    }))
+
+    return mergedArr
   }, [datasource])
 
   return {
@@ -60,6 +72,14 @@ export const checkCasing = (str: string) => {
     str = `"${str}"`
   }
 
+  return str
+}
+
+export const prefixDB = (table: string, dbSchema: string) => {
+  let str = table
+  if (dbSchema) {
+    str = `${dbSchema}.${table}`
+  }
   return str
 }
 
