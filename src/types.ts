@@ -37,9 +37,9 @@ export type ColumnsResponse = {
 }
 
 export const authTypeOptions = [
-  {key: 0, label: 'none', title: 'none'},
-  {key: 1, label: 'username/password', title: 'username/password'},
-  {key: 2, label: 'token', title: 'token'},
+  {key: 0, label: 'none', value: 'none'},
+  {key: 1, label: 'username/password', value: 'username/password'},
+  {key: 2, label: 'token', value: 'token'},
 ]
 
 export const sqlLanguageDefinition = {
