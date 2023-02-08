@@ -6,56 +6,19 @@ This is a plugin for Grafana that enables queries to Flight SQL APIs.
 
 ## Installation
 
-### Download a Release
+Download the latest release:
 
-We haven't released any builds of this plugin yet. You'll need to clone the
-repository and build it from source using following the instructions as a guide.
+```sh
+$ curl -L https://github.com/influxdata/grafana-flightsql-datasource/releases/download/v0.1.0/influxdata-flightsql-datasource-0.1.1.zip
+```
 
-### Building from Source
+Unzip the release into your Grafana plugins directory:
 
-These instructions assume you have the following tools installed:
+```
+$ unzip influxdata-flightsql-datasource-0.1.1.zip -d grafana-plugins/
+```
 
-- [`yarn`](https://yarnpkg.com)
-- [`mage`](https://magefile.org)
-- [`grafana version 9.2.x`](https://grafana.com/grafana/download/9.2.0)
-
-#### Docker Compose
-
-Docker Compose is the easiest way to get a Grafana instance running with this
-plugin present. A Docker Compose workflow is baked into the `yarn` workflow.
-
-1. Build frontend and backend in `dist/`:
-
-   ```shell
-   $ yarn build-plugin
-   ```
-
-1. Start Grafana in Docker Compose:
-
-   ```shell
-   $ yarn server
-   ```
-
-   The artifacts in `dist/` will be mounted and loaded into the installation.
-
-1. Navigate to the [Locally Running Grafana](http://localhost:3000/).
-1. Follow the instructions in [Adding a Flight SQL
-   Datasource](#adding-a-flight-sql-datasource).
-
-#### Running without Docker
-
-1. Build frontend and backend to produce `influxdata-flightsql-datasource.tar.gz`:
-
-   ```shell
-   $ yarn build-plugin
-   ```
-
-1. Unpack the archive to your chosen directory (e.g. `grafana-plugins/`).
-
-   ```shell
-   $ mkdir -p grafana-plugins/influxdata-flightsql-datasource
-   $ tar -xf influxdata-flightsql-datasource.tar.gz -C grafana-plugins/influxdata-flightsql-datasource
-   ```
+### Configuration
 
 1. Point Grafana to this the plugins directory. You have two options:
 

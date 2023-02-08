@@ -18,8 +18,11 @@ import {
 export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQLDataSourceOptions>) {
   const {options, onOptionsChange} = props
   const {jsonData} = options
-  const [selectedAuthType, setAuthType] = useState<SelectableValue<string>>(authTypeOptions[2])
-  const [metaDataArr, setMetaData] = useState([{key: '', value: ''}])
+  const [selectedAuthType, setAuthType] = useState<SelectableValue<string>>(
+    {value: jsonData.selectedAuthType, label: jsonData.selectedAuthType} || authTypeOptions[2]
+  )
+  const existingMetastate = jsonData?.metadata?.map((m: any) => ({key: Object.keys(m)[0], value: Object.values(m)[0]}))
+  const [metaDataArr, setMetaData] = useState(existingMetastate || [{key: '', value: ''}])
   useEffect(() => {
     onAuthTypeChange(selectedAuthType, options, onOptionsChange)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -27,18 +30,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
 
   useEffect(() => {
     const {onOptionsChange, options} = props
-    const jsonData = {
-      ...options.jsonData,
-      selectedAuthType: 'token',
-      secure: true,
-    }
-    onOptionsChange({...options, jsonData})
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
-    const {onOptionsChange, options} = props
-    const mapData = metaDataArr.map((m) => ({[m.key]: m.value}))
+    const mapData = metaDataArr?.map((m: any) => ({[m.key]: m.value}))
     const jsonData = {
       ...options.jsonData,
       metadata: mapData,
@@ -64,10 +56,8 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
           <Select
             options={authTypeOptions}
             onChange={setAuthType}
-            value={jsonData.selectedAuthType || ''}
+            value={selectedAuthType || ''}
             allowCustomValue={true}
-            autoFocus={true}
-            // formatCreateLabel={}
             width={40}
             placeholder="token"
           />
@@ -134,7 +124,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
                 type="text"
                 value={metaDataArr[i].key || ''}
                 placeholder="key"
-                onChange={(e) => onKeyChange(e, options, onOptionsChange, metaDataArr, i, setMetaData)}
+                onChange={(e) => onKeyChange(e, metaDataArr, i, setMetaData)}
               ></Input>
             </InlineField>
             <InlineField labelWidth={20} label="Value">
@@ -145,7 +135,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
                 type="text"
                 value={metaDataArr[i].value || ''}
                 placeholder="value"
-                onChange={(e) => onValueChange(e, options, onOptionsChange, metaDataArr, i, setMetaData)}
+                onChange={(e) => onValueChange(e, metaDataArr, i, setMetaData)}
               ></Input>
             </InlineField>
             {i + 1 >= metaDataArr.length && (

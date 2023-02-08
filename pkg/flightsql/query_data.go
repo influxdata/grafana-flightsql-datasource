@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"runtime/debug"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -13,43 +15,79 @@ import (
 
 // QueryData executes batches of ad-hoc queries and returns a batch of results.
 func (d *FlightSQLDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	response := backend.NewQueryDataResponse()
-	for _, qreq := range req.Queries {
-		var q queryRequest
-		if err := json.Unmarshal(qreq.JSON, &q); err != nil {
-			response.Responses[qreq.RefID] = backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("unmarshal query request: %s", err))
-			continue
-		}
+	var (
+		wg             sync.WaitGroup
+		response       = backend.NewQueryDataResponse()
+		executeResults = make(chan executeResult, len(req.Queries))
+	)
 
-		var format sqlutil.FormatQueryOption
-		switch q.Format {
-		case "time_series":
-			format = sqlutil.FormatOptionTimeSeries
-		case "table":
-			format = sqlutil.FormatOptionTable
-		default:
-			format = sqlutil.FormatOptionTimeSeries
-		}
-
-		query := &sqlutil.Query{
-			RawSQL:        q.Text,
-			RefID:         q.RefID,
-			MaxDataPoints: q.MaxDataPoints,
-			Interval:      time.Duration(q.IntervalMilliseconds) * time.Millisecond,
-			TimeRange:     qreq.TimeRange,
-			Format:        format,
-		}
-
-		// Process macros and execute the query.
-		sql, err := sqlutil.Interpolate(query, macros)
+	for _, dataQuery := range req.Queries {
+		query, err := decodeQueryRequest(dataQuery)
 		if err != nil {
-			response.Responses[qreq.RefID] = backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("macro interpolation: %s", err))
+			response.Responses[dataQuery.RefID] = backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
 			continue
 		}
-		query.RawSQL = sql
-		response.Responses[qreq.RefID] = d.query(ctx, query)
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			executeResults <- executeResult{
+				refID:        query.RefID,
+				dataResponse: d.query(ctx, *query),
+			}
+		}()
 	}
+
+	wg.Wait()
+	close(executeResults)
+	for r := range executeResults {
+		response.Responses[r.refID] = r.dataResponse
+	}
+
 	return response, nil
+}
+
+// decodeQueryRequest decodes a [backend.DataQuery] and returns a
+// [*sqlutil.Query] where all macros are expanded.
+func decodeQueryRequest(dataQuery backend.DataQuery) (*sqlutil.Query, error) {
+	var q queryRequest
+	if err := json.Unmarshal(dataQuery.JSON, &q); err != nil {
+		return nil, fmt.Errorf("unmarshal json: %w", err)
+	}
+
+	var format sqlutil.FormatQueryOption
+	switch q.Format {
+	case "time_series":
+		format = sqlutil.FormatOptionTimeSeries
+	case "table":
+		format = sqlutil.FormatOptionTable
+	default:
+		format = sqlutil.FormatOptionTimeSeries
+	}
+
+	query := &sqlutil.Query{
+		RawSQL:        q.Text,
+		RefID:         q.RefID,
+		MaxDataPoints: q.MaxDataPoints,
+		Interval:      time.Duration(q.IntervalMilliseconds) * time.Millisecond,
+		TimeRange:     dataQuery.TimeRange,
+		Format:        format,
+	}
+
+	// Process macros and execute the query.
+	sql, err := sqlutil.Interpolate(query, macros)
+	if err != nil {
+		return nil, fmt.Errorf("macro interpolation: %w", err)
+	}
+	query.RawSQL = sql
+
+	return query, nil
+}
+
+// executeResult is an envelope for concurrent query responses.
+type executeResult struct {
+	refID        string
+	dataResponse backend.DataResponse
 }
 
 // queryRequest is an inbound query request as part of a batch of queries sent
@@ -63,7 +101,14 @@ type queryRequest struct {
 }
 
 // query executes a SQL statement by issuing a `CommandStatementQuery` command to Flight SQL.
-func (d *FlightSQLDatasource) query(ctx context.Context, query *sqlutil.Query) backend.DataResponse {
+func (d *FlightSQLDatasource) query(ctx context.Context, query sqlutil.Query) (resp backend.DataResponse) {
+	defer func() {
+		if r := recover(); r != nil {
+			logErrorf("Panic: %s %s", r, string(debug.Stack()))
+			resp = backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("panic: %s", r))
+		}
+	}()
+
 	ctx = metadata.NewOutgoingContext(ctx, d.md)
 
 	info, err := d.client.Execute(ctx, query.RawSQL)
