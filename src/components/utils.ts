@@ -65,7 +65,11 @@ export const checkCasing = (str: string) => {
 
 export const handleColumnChange = (column: any, setColumnValues: any, columnValues: any) => {
   let newColumnValues = [...columnValues]
-  newColumnValues[column.index]['value'] = column.value
+  const lastIndex = newColumnValues.length - 1
+  if (column.index === undefined) {
+    column.index = lastIndex
+  }
+  newColumnValues[column.index]['value'] = column?.value
   setColumnValues(newColumnValues)
 }
 
