@@ -18,9 +18,10 @@ import {
 export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQLDataSourceOptions>) {
   const {options, onOptionsChange} = props
   const {jsonData} = options
-  const [selectedAuthType, setAuthType] = useState<SelectableValue<string>>(
-    {value: jsonData.selectedAuthType, label: jsonData.selectedAuthType} || authTypeOptions[2]
-  )
+  const [selectedAuthType, setAuthType] = useState<SelectableValue<string>>({
+    value: jsonData?.selectedAuthType,
+    label: jsonData?.selectedAuthType,
+  })
   const existingMetastate = jsonData?.metadata?.map((m: any) => ({key: Object.keys(m)[0], value: Object.values(m)[0]}))
   const [metaDataArr, setMetaData] = useState(existingMetastate || [{key: '', value: ''}])
   useEffect(() => {
@@ -34,6 +35,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
     const jsonData = {
       ...options.jsonData,
       metadata: mapData,
+      secure: true,
     }
     onOptionsChange({...options, jsonData})
     // eslint-disable-next-line react-hooks/exhaustive-deps
