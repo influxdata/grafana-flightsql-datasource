@@ -3,7 +3,7 @@ import {Input} from '@grafana/ui'
 
 export const WhereExp = ({index, setWhere, whereValues}: any) => (
   <Input
-    autoFocus
+    autoFocus={false}
     type="text"
     spellCheck={false}
     onBlur={() => {}}

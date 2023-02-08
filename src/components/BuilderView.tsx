@@ -168,7 +168,6 @@ export function BuilderView({query, datasource, onChange}: any) {
       <div className={selectClass}>
         <SegmentSection label="GROUP BY" fill={true}>
           <Input
-            autoFocus
             type="text"
             spellCheck={false}
             onBlur={() => {}}
@@ -189,7 +188,6 @@ export function BuilderView({query, datasource, onChange}: any) {
       <div className={selectClass}>
         <SegmentSection label="ORDER BY" fill={true}>
           <Input
-            autoFocus
             type="text"
             spellCheck={false}
             onBlur={() => {}}
@@ -210,7 +208,7 @@ export function BuilderView({query, datasource, onChange}: any) {
       <div className={selectClass}>
         <SegmentSection label="LIMIT" fill={true}>
           <Input
-            autoFocus
+            autoFocus={false}
             type="text"
             spellCheck={false}
             onBlur={() => {}}
