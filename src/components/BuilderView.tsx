@@ -4,7 +4,6 @@ import {css} from '@emotion/css'
 import {Select, SegmentSection, InlineLabel, Input} from '@grafana/ui'
 import {SelectableValue} from '@grafana/data'
 import {
-  GetTables,
   checkCasing,
   buildQueryString,
   handleColumnChange,
@@ -31,8 +30,7 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
   const [columns, setColumns] = useState()
   const [table, setTable] = useState<SelectableValue<string>>()
   const [column, setColumn] = useState<SelectableValue<string>>()
-
-  const {loadingTable, tables, errorTable} = GetTables(datasource)
+  const [tables, setTables] = useState<any>()
 
   useEffect(() => {
     ;(async () => {
@@ -47,7 +45,32 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
       }))
       setColumns(columns)
     })()
-  }, [table, datasource])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table])
+
+  useEffect(() => {
+    ;(async () => {
+      const res = await datasource.getTables()
+
+      const dbSchemaArr = res.frames[0].data.values[1].map((t: string) => ({
+        dbSchema: t,
+      }))
+
+      const tableArr = res.frames[0].data.values[2].map((t: string) => ({
+        label: t,
+        value: t,
+      }))
+
+      const mergedArr = dbSchemaArr.map((obj: any, index: string | number) => ({
+        ...obj,
+        ...tableArr[index],
+      }))
+
+      setTables(mergedArr)
+    })()
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     // in the case where its loaded on refresh there is no column
@@ -90,28 +113,35 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
   })
 
   useEffect(() => {
-    if (!fromRawSql) {
-      if (query.table) {
-        setTable({value: query.table, label: query.table})
+    if (!fromRawSql && tables) {
+      const tableExists = tables?.find((t: any) => t.label === query.table)
+      if (tableExists) {
+        if (query.table) {
+          setTable({value: query.table, label: query.table})
+        }
+        if (query.columns) {
+          setColumnValues(query.columns)
+        }
+        if (query.wheres) {
+          setWhereValues(query.wheres)
+        }
+        if (query.groupBy) {
+          setGroupBy(query.groupBy)
+        }
+        if (query.orderBy) {
+          setOrderBy(query.orderBy)
+        }
+        if (query.limit) {
+          setLimit(query.limit)
+        }
       }
-      if (query.columns) {
-        setColumnValues(query.columns)
-      }
-      if (query.wheres) {
-        setWhereValues(query.wheres)
-      }
-      if (query.groupBy) {
-        setGroupBy(query.groupBy)
-      }
-      if (query.orderBy) {
-        setOrderBy(query.orderBy)
-      }
-      if (query.limit) {
-        setLimit(query.limit)
+      if (!tableExists) {
+        console.log('query', query)
+        query.queryText = ''
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [tables])
   return (
     <>
       <div className={selectClass} style={{paddingTop: '5px'}}>
@@ -119,8 +149,6 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
           <Select
             options={tables}
             onChange={setTable}
-            isLoading={loadingTable}
-            disabled={!!errorTable}
             value={table}
             allowCustomValue={true}
             autoFocus={true}
