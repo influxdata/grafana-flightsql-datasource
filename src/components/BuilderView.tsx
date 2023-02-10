@@ -45,6 +45,7 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
       }))
       setColumns(columns)
     })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table])
 
   useEffect(() => {
