@@ -67,7 +67,9 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
 
       setTables(mergedArr)
     })()
-  }, [datasource])
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     // in the case where its loaded on refresh there is no column
@@ -110,28 +112,35 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
   })
 
   useEffect(() => {
-    if (!fromRawSql) {
-      if (query.table) {
-        setTable({value: query.table, label: query.table})
+    if (!fromRawSql && tables) {
+      const tableExists = tables?.find((t: any) => t.label === query.table)
+      if (tableExists) {
+        if (query.table) {
+          setTable({value: query.table, label: query.table})
+        }
+        if (query.columns) {
+          setColumnValues(query.columns)
+        }
+        if (query.wheres) {
+          setWhereValues(query.wheres)
+        }
+        if (query.groupBy) {
+          setGroupBy(query.groupBy)
+        }
+        if (query.orderBy) {
+          setOrderBy(query.orderBy)
+        }
+        if (query.limit) {
+          setLimit(query.limit)
+        }
       }
-      if (query.columns) {
-        setColumnValues(query.columns)
-      }
-      if (query.wheres) {
-        setWhereValues(query.wheres)
-      }
-      if (query.groupBy) {
-        setGroupBy(query.groupBy)
-      }
-      if (query.orderBy) {
-        setOrderBy(query.orderBy)
-      }
-      if (query.limit) {
-        setLimit(query.limit)
+      if (!tableExists) {
+        console.log('query', query)
+        query.queryText = ''
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [tables])
   return (
     <>
       <div className={selectClass} style={{paddingTop: '5px'}}>
