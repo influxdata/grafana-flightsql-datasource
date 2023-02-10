@@ -58,7 +58,10 @@ $ unzip influxdata-flightsql-datasource-0.1.1.zip -d grafana-plugins/
 
 ### Adding a Flight SQL Datasource
 
-TODO
+1. Open the side menu by clicking the Grafana icon in the top header.
+1. In the side menu under the Dashboards link you should find a link named Data Sources.
+1. Click the + Add data source button in the top header.
+1. Select FlightSQL from the Type dropdown.
 
 ### Configuring the Plugin
 
