@@ -1,41 +1,4 @@
-import {useAsync} from 'react-use'
-import {FlightSQLDataSource} from '../datasource'
-import {SelectableValue} from '@grafana/data'
 import {LanguageCompletionProvider, getStandardSQLCompletionProvider} from '@grafana/experimental'
-
-type AsyncTablesState = {
-  loadingTable: boolean
-  tables: Array<SelectableValue<string>>
-  errorTable: Error | undefined
-}
-
-export const GetTables = (datasource: FlightSQLDataSource): AsyncTablesState => {
-  const result = useAsync(async () => {
-    const res = await datasource.getTables()
-
-    const dbSchemaArr = res.frames[0].data.values[1].map((t: string) => ({
-      dbSchema: t,
-    }))
-
-    const tableArr = res.frames[0].data.values[2].map((t: string) => ({
-      label: t,
-      value: t,
-    }))
-
-    const mergedArr = dbSchemaArr.map((obj: any, index: string | number) => ({
-      ...obj,
-      ...tableArr[index],
-    }))
-
-    return mergedArr
-  }, [datasource])
-
-  return {
-    loadingTable: result.loading,
-    tables: result.value ?? [],
-    errorTable: result.error,
-  }
-}
 
 export const buildQueryString = (
   columns: string,

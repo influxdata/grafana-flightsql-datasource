@@ -4,7 +4,6 @@ import {css} from '@emotion/css'
 import {Select, SegmentSection, InlineLabel, Input} from '@grafana/ui'
 import {SelectableValue} from '@grafana/data'
 import {
-  GetTables,
   checkCasing,
   buildQueryString,
   handleColumnChange,
@@ -31,8 +30,7 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
   const [columns, setColumns] = useState()
   const [table, setTable] = useState<SelectableValue<string>>()
   const [column, setColumn] = useState<SelectableValue<string>>()
-
-  const {loadingTable, tables, errorTable} = GetTables(datasource)
+  const [tables, setTables] = useState<any>()
 
   useEffect(() => {
     ;(async () => {
@@ -47,7 +45,29 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
       }))
       setColumns(columns)
     })()
-  }, [table, datasource])
+  }, [table])
+
+  useEffect(() => {
+    ;(async () => {
+      const res = await datasource.getTables()
+
+      const dbSchemaArr = res.frames[0].data.values[1].map((t: string) => ({
+        dbSchema: t,
+      }))
+
+      const tableArr = res.frames[0].data.values[2].map((t: string) => ({
+        label: t,
+        value: t,
+      }))
+
+      const mergedArr = dbSchemaArr.map((obj: any, index: string | number) => ({
+        ...obj,
+        ...tableArr[index],
+      }))
+
+      setTables(mergedArr)
+    })()
+  }, [datasource])
 
   useEffect(() => {
     // in the case where its loaded on refresh there is no column
@@ -119,8 +139,6 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
           <Select
             options={tables}
             onChange={setTable}
-            isLoading={loadingTable}
-            disabled={!!errorTable}
             value={table}
             allowCustomValue={true}
             autoFocus={true}
