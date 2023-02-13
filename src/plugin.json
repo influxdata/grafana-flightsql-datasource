@@ -24,7 +24,20 @@
         "url": "https://github.com/influxdata/grafana-flightsql-datasource"
       }
     ],
-    "screenshots": [],
+    "screenshots": [
+      {
+        "name": "Config Data Source",
+        "path": "img/datasource-configuration.png"
+      },
+      {
+        "name": "Builder View Query",
+        "path": "img/builder-view-query.png"
+      },
+      {
+        "name": "Raw Editor Query",
+        "path": "img/raw-editor-query.png"
+      }
+    ],
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },
