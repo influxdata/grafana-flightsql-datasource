@@ -110,7 +110,6 @@ func (d *FlightSQLDatasource) query(ctx context.Context, query sqlutil.Query) (r
 	}()
 
 	ctx = metadata.NewOutgoingContext(ctx, d.md)
-
 	info, err := d.client.Execute(ctx, query.RawSQL)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
@@ -118,11 +117,16 @@ func (d *FlightSQLDatasource) query(ctx context.Context, query sqlutil.Query) (r
 	if len(info.Endpoint) != 1 {
 		return backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("unsupported endpoint count in response: %d", len(info.Endpoint)))
 	}
-	reader, err := d.client.DoGet(ctx, info.Endpoint[0].Ticket)
+	reader, err := d.client.DoGetWithHeaderExtraction(ctx, info.Endpoint[0].Ticket)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
 	}
 	defer reader.Release()
 
-	return newQueryDataResponse(reader, query)
+	headers, err := reader.Header()
+	if err != nil {
+		logErrorf("Failed to extract headers: %s", err)
+	}
+
+	return newQueryDataResponse(reader, query, headers)
 }

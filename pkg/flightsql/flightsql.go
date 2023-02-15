@@ -8,7 +8,6 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/apache/arrow/go/v10/arrow/flight/flightsql"
 	"github.com/go-chi/chi/v5"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -51,7 +50,7 @@ func (cfg config) validate() error {
 
 // FlightSQLDatasource is a Grafana datasource plugin for Flight SQL.
 type FlightSQLDatasource struct {
-	client          *flightsql.Client
+	client          *client
 	resourceHandler backend.CallResourceHandler
 	md              metadata.MD
 }
@@ -86,7 +85,7 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 
 	ctx := context.Background()
 	if len(cfg.Username) > 0 || len(cfg.Password) > 0 {
-		ctx, err = client.Client.AuthenticateBasicToken(ctx, cfg.Username, cfg.Password)
+		ctx, err = client.FlightClient().AuthenticateBasicToken(ctx, cfg.Username, cfg.Password)
 		if err != nil {
 			return nil, fmt.Errorf("flightsql: %s", err)
 		}
