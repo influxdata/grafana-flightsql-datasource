@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"google.golang.org/grpc/metadata"
 )
 
 // TODO(brett): Make this configurable. This is an arbitrary value right
@@ -32,7 +33,7 @@ type recordReader interface {
 // [arrow.Record]s.
 //
 // The backend.DataResponse contains a single [data.Frame].
-func newQueryDataResponse(reader recordReader, query sqlutil.Query) backend.DataResponse {
+func newQueryDataResponse(reader recordReader, query sqlutil.Query, headers metadata.MD) backend.DataResponse {
 	var resp backend.DataResponse
 	frame, err := frameForRecords(reader)
 	if err != nil {
@@ -43,6 +44,9 @@ func newQueryDataResponse(reader recordReader, query sqlutil.Query) backend.Data
 		return resp
 	}
 
+	frame.Meta.Custom = map[string]any{
+		"headers": headers,
+	}
 	frame.Meta.ExecutedQueryString = query.RawSQL
 	frame.Meta.DataTopic = data.DataTopic(query.RawSQL)
 

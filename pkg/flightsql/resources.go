@@ -150,7 +150,7 @@ func (d *FlightSQLDatasource) getColumns(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func newDataResponse(reader *flight.Reader) backend.DataResponse {
+func newDataResponse(reader recordReader) backend.DataResponse {
 	var resp backend.DataResponse
 	frame := newFrame(reader.Schema())
 READER:

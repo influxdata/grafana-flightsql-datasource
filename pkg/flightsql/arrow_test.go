@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/metadata"
 )
 
 func TestNewQueryDataResponse(t *testing.T) {
@@ -79,7 +80,7 @@ func TestNewQueryDataResponse(t *testing.T) {
 	require.NoError(t, err)
 
 	query := sqlutil.Query{Format: sqlutil.FormatOptionTable}
-	resp := newQueryDataResponse(errReader{RecordReader: reader}, query)
+	resp := newQueryDataResponse(errReader{RecordReader: reader}, query, metadata.MD{})
 	require.NoError(t, resp.Error)
 	require.Len(t, resp.Frames, 1)
 	require.Len(t, resp.Frames[0].Fields, 13)
@@ -200,7 +201,7 @@ func TestNewQueryDataResponse_Error(t *testing.T) {
 		err:          fmt.Errorf("explosion!"),
 	}
 	query := sqlutil.Query{Format: sqlutil.FormatOptionTable}
-	resp := newQueryDataResponse(wrappedReader, query)
+	resp := newQueryDataResponse(wrappedReader, query, metadata.MD{})
 	require.Error(t, resp.Error)
 	require.Equal(t, fmt.Errorf("explosion!"), resp.Error)
 }
@@ -240,7 +241,7 @@ func TestNewQueryDataResponse_WideTable(t *testing.T) {
 	reader, err := array.NewRecordReader(schema, records)
 	require.NoError(t, err)
 
-	resp := newQueryDataResponse(errReader{RecordReader: reader}, sqlutil.Query{})
+	resp := newQueryDataResponse(errReader{RecordReader: reader}, sqlutil.Query{}, metadata.MD{})
 	require.NoError(t, resp.Error)
 	require.Len(t, resp.Frames, 1)
 	require.Equal(t, 3, resp.Frames[0].Rows())
@@ -445,4 +446,42 @@ func TestCopyData_Float64(t *testing.T) {
 	require.Equal(t, float64(1.1), *field.CopyAt(0).(*float64))
 	require.Equal(t, (*float64)(nil), field.CopyAt(1))
 	require.Equal(t, float64(3.3), *field.CopyAt(2).(*float64))
+}
+
+func TestCustomMetadata(t *testing.T) {
+	schema := arrow.NewSchema([]arrow.Field{
+		{
+			Name:     "int64",
+			Type:     &arrow.Int64Type{},
+			Nullable: true,
+			Metadata: arrow.NewMetadata(nil, nil),
+		},
+	}, nil)
+	i64s, _, err := array.FromJSON(
+		memory.DefaultAllocator,
+		arrow.PrimitiveTypes.Int64,
+		strings.NewReader(`[1, 2, 3]`),
+	)
+	require.NoError(t, err)
+
+	record := array.NewRecord(schema, []arrow.Array{i64s}, -1)
+	records := []arrow.Record{record}
+	reader, err := array.NewRecordReader(schema, records)
+	require.NoError(t, err)
+
+	md := metadata.MD{}
+	md.Set("trace-id", "abc")
+	md.Set("trace-sampled", "true")
+	query := sqlutil.Query{
+		Format: sqlutil.FormatOptionTable,
+	}
+	resp := newQueryDataResponse(errReader{RecordReader: reader}, query, md)
+	require.NoError(t, resp.Error)
+
+	require.Equal(t, map[string]any{
+		"headers": metadata.MD{
+			"trace-id":      []string{"abc"},
+			"trace-sampled": []string{"true"},
+		},
+	}, resp.Frames[0].Meta.Custom)
 }
