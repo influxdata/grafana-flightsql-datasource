@@ -3,7 +3,6 @@ module github.com/influxdata/grafana-flightsql-datasource
 go 1.19
 
 require (
-	github.com/apache/arrow/go/v10 v10.0.1
 	github.com/apache/arrow/go/v12 v12.0.0-20230215210516-4550c9b35e67
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/google/go-cmp v0.5.9
@@ -78,7 +77,7 @@ require (
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.3.8 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/genproto v0.0.0-20210630183607-d20f26d13c79 // indirect
