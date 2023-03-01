@@ -4,6 +4,10 @@
 
 This is a plugin for Grafana that enables queries to Flight SQL APIs.
 
+## Requirements
+
+The plugin requires the user to run Grafana ^9.2.5.
+
 ## Installation
 
 Download the latest release:
