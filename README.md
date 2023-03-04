@@ -13,13 +13,13 @@ The plugin requires the user to run Grafana ^9.2.5.
 Download the latest release:
 
 ```sh
-$ curl -L https://github.com/influxdata/grafana-flightsql-datasource/releases/download/v0.1.0/influxdata-flightsql-datasource-0.1.1.zip
+$ curl -L https://github.com/influxdata/grafana-flightsql-datasource/releases/download/v0.1.0/influxdata-flightsql-datasource-0.1.5.zip
 ```
 
 Unzip the release into your Grafana plugins directory:
 
 ```
-$ unzip influxdata-flightsql-datasource-0.1.1.zip -d grafana-plugins/
+$ unzip influxdata-flightsql-datasource-0.1.5.zip -d grafana-plugins/
 ```
 
 ### Configuration
