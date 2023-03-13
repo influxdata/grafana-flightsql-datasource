@@ -53,14 +53,15 @@ export const mockDatasourceOptions: DataSourcePluginOptionsEditorProps<FlightSQL
     isDefault: false,
     jsonData: {
       host: '',
-      token: '',
       secure: true,
       username: '',
-      password: '',
       selectedAuthType: '',
       metadata: [],
     },
-    secureJsonFields: {},
+    secureJsonFields: {
+      token: false,
+      password: false,
+    },
     readOnly: false,
     withCredentials: false,
     typeName: '',

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react'
 import {InlineSwitch, FieldSet, InlineField, SecretInput, Input, Select, InlineFieldRow, InlineLabel} from '@grafana/ui'
 import {DataSourcePluginOptionsEditorProps, SelectableValue} from '@grafana/data'
-import {FlightSQLDataSourceOptions, authTypeOptions} from '../types'
+import {FlightSQLDataSourceOptions, authTypeOptions, SecureJsonData} from '../types'
 import {
   onHostChange,
   onTokenChange,
@@ -13,11 +13,15 @@ import {
   onValueChange,
   addMetaData,
   removeMetaData,
+  onResetToken,
+  onResetPassword,
 } from './utils'
 
-export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQLDataSourceOptions>) {
+export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQLDataSourceOptions, SecureJsonData>) {
   const {options, onOptionsChange} = props
   const {jsonData} = options
+  const {secureJsonData, secureJsonFields} = options
+
   const [selectedAuthType, setAuthType] = useState<SelectableValue<string>>({
     value: jsonData?.selectedAuthType,
     label: jsonData?.selectedAuthType,
@@ -70,11 +74,11 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
               width={40}
               name="token"
               type="text"
-              value={jsonData.token || ''}
+              value={secureJsonData?.token || ''}
               placeholder="****************"
               onChange={(e) => onTokenChange(e, options, onOptionsChange)}
-              onReset={() => onTokenChange(null, options, onOptionsChange)}
-              isConfigured={false}
+              onReset={() => onResetToken(options, onOptionsChange)}
+              isConfigured={secureJsonFields?.token}
             ></SecretInput>
           </InlineField>
         )}
@@ -95,11 +99,11 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
                 width={40}
                 name="password"
                 type="text"
-                value={jsonData.password || ''}
+                value={secureJsonData?.password || ''}
                 placeholder="****************"
                 onChange={(e) => onPasswordChange(e, options, onOptionsChange)}
-                onReset={() => onPasswordChange(null, options, onOptionsChange)}
-                isConfigured={false}
+                onReset={() => onResetPassword(options, onOptionsChange)}
+                isConfigured={secureJsonFields?.password}
               ></SecretInput>
             </InlineField>
           </InlineFieldRow>

@@ -28,6 +28,11 @@ export interface FlightSQLDataSourceOptions extends DataSourceJsonData {
   metadata?: any
 }
 
+export interface SecureJsonData {
+  password?: string
+  token?: string
+}
+
 export type TablesResponse = {
   tables: string[]
 }

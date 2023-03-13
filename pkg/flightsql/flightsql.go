@@ -64,6 +64,14 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 		return nil, fmt.Errorf("config: %s", err)
 	}
 
+	if token, exists := settings.DecryptedSecureJSONData["token"]; exists {
+		cfg.Token = token
+	}
+
+	if password, exists := settings.DecryptedSecureJSONData["password"]; exists {
+		cfg.Password = password
+	}
+
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("config validation: %v", err)
 	}
