@@ -136,7 +136,6 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
         }
       }
       if (!tableExists) {
-        console.log('query', query)
         query.queryText = ''
       }
     }

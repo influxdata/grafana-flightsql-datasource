@@ -106,14 +106,6 @@ export const onHostChange = (event: any, options: any, onOptionsChange: any) => 
   onOptionsChange({...options, jsonData})
 }
 
-export const onTokenChange = (event: any, options: any, onOptionsChange: any) => {
-  const jsonData = {
-    ...options.jsonData,
-    token: event?.target?.value || '',
-  }
-  onOptionsChange({...options, jsonData})
-}
-
 export const onSecureChange = (options: any, onOptionsChange: any) => {
   const jsonData = {
     ...options.jsonData,
@@ -131,11 +123,11 @@ export const onUsernameChange = (event: any, options: any, onOptionsChange: any)
 }
 
 export const onPasswordChange = (event: any, options: any, onOptionsChange: any) => {
-  const jsonData = {
-    ...options.jsonData,
-    password: event.target.value,
+  const secureJsonData = {
+    ...options.secureJsonData,
+    password: event?.target?.value || '',
   }
-  onOptionsChange({...options, jsonData})
+  onOptionsChange({...options, secureJsonData})
 }
 
 export const onAuthTypeChange = (selectedAuthType: any, options: any, onOptionsChange: any) => {
@@ -189,4 +181,40 @@ export const onValueChange = (event: any, metaDataArr: any, index: any, setMetaD
   let newMetaValues = [...metaDataArr]
   newMetaValues[index]['value'] = event.target.value
   setMetaData(newMetaValues)
+}
+
+export const onTokenChange = (event: any, options: any, onOptionsChange: any) => {
+  const secureJsonData = {
+    ...options.secureJsonData,
+    token: event?.target?.value || '',
+  }
+  onOptionsChange({...options, secureJsonData})
+}
+
+export const onResetToken = (options: any, onOptionsChange: any) => {
+  onOptionsChange({
+    ...options,
+    secureJsonFields: {
+      ...options.secureJsonFields,
+      token: false,
+    },
+    secureJsonData: {
+      ...options.secureJsonData,
+      token: '',
+    },
+  })
+}
+
+export const onResetPassword = (options: any, onOptionsChange: any) => {
+  onOptionsChange({
+    ...options,
+    secureJsonFields: {
+      ...options.secureJsonFields,
+      password: false,
+    },
+    secureJsonData: {
+      ...options.secureJsonData,
+      password: '',
+    },
+  })
 }
