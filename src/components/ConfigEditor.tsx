@@ -26,9 +26,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
     value: jsonData?.selectedAuthType,
     label: jsonData?.selectedAuthType,
   })
-  const hasMeta = jsonData?.metadata?.length > 0
-  const existingMetastate =
-    hasMeta && jsonData?.metadata?.map((m: any) => ({key: Object.keys(m)[0], value: Object.values(m)[0]}))
+  const existingMetastate = jsonData?.metadata?.length && jsonData?.metadata?.map((m: any) => ({key: Object.keys(m)[0], value: Object.values(m)[0]}))
   const [metaDataArr, setMetaData] = useState(existingMetastate || [{key: '', value: ''}])
   useEffect(() => {
     onAuthTypeChange(selectedAuthType, options, onOptionsChange)
@@ -37,17 +35,16 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
 
   useEffect(() => {
     const {onOptionsChange, options} = props
-    let mapData = []
+    let mapData
+    let jsonData
     if (metaDataArr[0]?.key !== '') {
       mapData = metaDataArr?.map((m: any) => ({[m.key]: m.value}))
+        jsonData = {
+        ...options.jsonData,
+        metadata: mapData,
+      }
+      onOptionsChange({...options, jsonData})
     }
-
-    const jsonData = {
-      ...options.jsonData,
-      metadata: mapData,
-      secure: true,
-    }
-    onOptionsChange({...options, jsonData})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metaDataArr])
 
