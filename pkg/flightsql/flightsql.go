@@ -41,7 +41,8 @@ func (cfg config) validate() error {
 	noToken := len(cfg.Token) == 0
 	noUserPass := len(cfg.Username) == 0 || len(cfg.Password) == 0
 
-	if noToken && noUserPass {
+	// if not secure don't make users supply a token
+	if noToken && noUserPass && cfg.Secure {
 		return fmt.Errorf("token or username/password are required")
 	}
 
