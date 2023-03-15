@@ -26,7 +26,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
     value: jsonData?.selectedAuthType,
     label: jsonData?.selectedAuthType,
   })
-  const existingMetastate = jsonData?.metadata?.map((m: any) => ({key: Object.keys(m)[0], value: Object.values(m)[0]}))
+  const existingMetastate = jsonData?.metadata?.length && jsonData?.metadata?.map((m: any) => ({key: Object.keys(m)[0], value: Object.values(m)[0]}))
   const [metaDataArr, setMetaData] = useState(existingMetastate || [{key: '', value: ''}])
   useEffect(() => {
     onAuthTypeChange(selectedAuthType, options, onOptionsChange)
@@ -35,13 +35,16 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
 
   useEffect(() => {
     const {onOptionsChange, options} = props
-    const mapData = metaDataArr?.map((m: any) => ({[m.key]: m.value}))
-    const jsonData = {
-      ...options.jsonData,
-      metadata: mapData,
-      secure: true,
+    let mapData
+    let jsonData
+    if (metaDataArr[0]?.key !== '') {
+      mapData = metaDataArr?.map((m: any) => ({[m.key]: m.value}))
+        jsonData = {
+        ...options.jsonData,
+        metadata: mapData,
+      }
+      onOptionsChange({...options, jsonData})
     }
-    onOptionsChange({...options, jsonData})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metaDataArr])
 
@@ -128,7 +131,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
                 width={40}
                 name="key"
                 type="text"
-                value={metaDataArr[i].key || ''}
+                value={metaDataArr[i]?.key || ''}
                 placeholder="key"
                 onChange={(e) => onKeyChange(e, metaDataArr, i, setMetaData)}
               ></Input>
@@ -139,7 +142,7 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
                 width={40}
                 name="value"
                 type="text"
-                value={metaDataArr[i].value || ''}
+                value={metaDataArr[i]?.value || ''}
                 placeholder="value"
                 onChange={(e) => onValueChange(e, metaDataArr, i, setMetaData)}
               ></Input>

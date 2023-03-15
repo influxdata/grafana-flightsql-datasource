@@ -9,6 +9,9 @@ beforeAll(() => {
     if (/Warning.*not wrapped in act/.test(args[0])) {
       return
     }
+    if (/Each child in a list should have a unique "key" prop/.test(args[0])) {
+      return
+    }
     originalError.call(console, ...args)
   }
 })
@@ -20,7 +23,10 @@ afterAll(() => {
 const setup = async (optionOverrides?: object) => {
   const props = {
     query: '',
-    datasource: '',
+    datasource: {
+      getTables: () => {},
+      getColumns: () => {}
+    },
     onChange: () => {},
     fromRawSql: true,
   }

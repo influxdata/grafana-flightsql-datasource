@@ -45,7 +45,7 @@ export function QueryEditor(props: QueryEditorProps<FlightSQLDataSource, SQLQuer
 
   const getTables = useCallback(async () => {
     const res = await datasource.getTables()
-    return res.frames[0].data.values[2].map((t: string) => ({
+    return res?.frames[0].data.values[2].map((t: string) => ({
       name: checkCasing(t),
     }))
   }, [datasource])
