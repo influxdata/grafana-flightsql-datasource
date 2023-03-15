@@ -52,16 +52,16 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
     ;(async () => {
       const res = await datasource.getTables()
 
-      const dbSchemaArr = res.frames[0].data.values[1].map((t: string) => ({
+      const dbSchemaArr = res?.frames[0].data.values[1].map((t: string) => ({
         dbSchema: t,
       }))
 
-      const tableArr = res.frames[0].data.values[2].map((t: string) => ({
+      const tableArr = res?.frames[0].data.values[2].map((t: string) => ({
         label: t,
         value: t,
       }))
 
-      const mergedArr = dbSchemaArr.map((obj: any, index: string | number) => ({
+      const mergedArr = dbSchemaArr?.map((obj: any, index: string | number) => ({
         ...obj,
         ...tableArr[index],
       }))
