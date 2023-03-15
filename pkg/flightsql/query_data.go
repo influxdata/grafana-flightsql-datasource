@@ -109,7 +109,10 @@ func (d *FlightSQLDatasource) query(ctx context.Context, query sqlutil.Query) (r
 		}
 	}()
 
-	ctx = metadata.NewOutgoingContext(ctx, d.md)
+	if d.md.Len() != 0 {
+		ctx = metadata.NewOutgoingContext(ctx, d.md)
+	}
+
 	info, err := d.client.Execute(ctx, query.RawSQL)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
