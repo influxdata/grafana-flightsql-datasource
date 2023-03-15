@@ -100,7 +100,7 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 		}
 		authMD, _ := metadata.FromOutgoingContext(ctx)
 		md = metadata.Join(md, authMD)
-	} 
+	}
 
 	if cfg.Token != "" {
 		md.Set("Authorization", fmt.Sprintf("Bearer %s", cfg.Token))
