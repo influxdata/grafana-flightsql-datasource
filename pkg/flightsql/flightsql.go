@@ -88,7 +88,9 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 			if _, ok := md[k]; ok {
 				return nil, fmt.Errorf("metadata: duplicate key: %s", k)
 			}
-			md.Set(k, v)
+			if k != "" {
+				md.Set(k, v)
+			}
 		}
 	}
 
