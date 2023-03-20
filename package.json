@@ -1,6 +1,6 @@
 {
   "name": "flightsql-datasource",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
