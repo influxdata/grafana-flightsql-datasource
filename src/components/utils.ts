@@ -131,11 +131,27 @@ export const onPasswordChange = (event: any, options: any, onOptionsChange: any)
 }
 
 export const onAuthTypeChange = (selectedAuthType: any, options: any, onOptionsChange: any) => {
-  const jsonData = {
-    ...options.jsonData,
-    selectedAuthType: selectedAuthType?.label,
-  }
-  onOptionsChange({...options, jsonData})
+  const notTokenType =  selectedAuthType?.label !== "token"
+  const notPassType = selectedAuthType?.label !== "username/password"
+
+  onOptionsChange({
+    ...options,
+    jsonData: {
+      ...options.jsonData,
+      selectedAuthType: selectedAuthType?.label,
+      username: notPassType && '',
+    },
+    secureJsonFields: {
+      ...options.secureJsonFields,
+      token: notTokenType && false,
+      password: notPassType && false,
+    },
+    secureJsonData: {
+      ...options.secureJsonData,
+      token: notTokenType && '',
+      password: notPassType && '',
+    },
+  })
 }
 
 export const getSqlCompletionProvider: (args: any) => LanguageCompletionProvider =
