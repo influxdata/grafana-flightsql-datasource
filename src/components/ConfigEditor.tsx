@@ -34,17 +34,13 @@ export function ConfigEditor(props: DataSourcePluginOptionsEditorProps<FlightSQL
   }, [selectedAuthType])
 
   useEffect(() => {
-    const {onOptionsChange, options} = props
-    let mapData
-    let jsonData
-    if (metaDataArr[0]?.key !== '') {
-      mapData = metaDataArr?.map((m: any) => ({[m.key]: m.value}))
-        jsonData = {
+    const {onOptionsChange, options} = props  
+      const mapData = metaDataArr?.map((m: any) => ({[m.key]: m.value}))
+        const jsonData = {
         ...options.jsonData,
         metadata: mapData,
       }
       onOptionsChange({...options, jsonData})
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metaDataArr])
 
