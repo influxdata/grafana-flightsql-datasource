@@ -71,16 +71,10 @@ func (d *FlightSQLDatasource) getTables(w http.ResponseWriter, r *http.Request) 
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 	ctx = metadata.NewOutgoingContext(ctx, d.md)
-	bucketMetaData := d.md.Get("bucket-name")
 
-	opts := &flightsql.GetTablesOpts{}
-
-	if len(bucketMetaData) > 0 {
-		opts = &flightsql.GetTablesOpts{
-			TableTypes: []string{"BASE TABLE"},
-		}
-	}
-	info, err := d.client.GetTables(ctx, opts)
+	info, err := d.client.GetTables(ctx, &flightsql.GetTablesOpts{
+		TableTypes: []string{"BASE TABLE", "table"},
+	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
