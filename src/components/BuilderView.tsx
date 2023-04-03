@@ -16,6 +16,7 @@ import {
   formatWheres,
   formatCreateLabel,
   prefixDB,
+  removeQuotes,
 } from './utils'
 import {SelectColumn} from './SelectColumn'
 import {WhereExp} from './WhereExp'
@@ -114,10 +115,11 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
 
   useEffect(() => {
     if (!fromRawSql && tables) {
-      const tableExists = tables?.find((t: any) => t.label === query.table)
+      const unquotedTable = removeQuotes(query?.table)
+      const tableExists = tables?.find((t: any) => t.label === unquotedTable)
       if (tableExists) {
         if (query.table) {
-          setTable({value: query.table, label: query.table})
+          setTable({value: unquotedTable, label: unquotedTable})
         }
         if (query.columns) {
           setColumnValues(query.columns)
