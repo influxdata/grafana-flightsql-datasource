@@ -234,3 +234,7 @@ export const onResetPassword = (options: any, onOptionsChange: any) => {
     },
   })
 }
+
+export const removeQuotes = (str: string) => {
+  return str?.replace(/['"]+/g, '')
+}
