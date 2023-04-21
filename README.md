@@ -1,7 +1,5 @@
 # Grafana Flight SQL Datasource
 
-:warning: This library is experimental and under active development. The configuration it provides could change at any time so use at your own risk.
-
 This is a plugin for Grafana that enables queries to Flight SQL APIs.
 
 ## Requirements
@@ -10,35 +8,60 @@ The plugin requires the user to run Grafana ^9.2.5.
 
 ## Installation
 
-Download the latest release:
+Download the [latest Grafana Flight SQL plugin](https://github.com/influxdata/grafana-flightsql-datasource/releases).
 
-```sh
-$ curl -L https://github.com/influxdata/grafana-flightsql-datasource/releases/download/v0.1.6/influxdata-flightsql-datasource-0.1.6.zip
-```
+Create a directory for grafana to access your custom-plugins eg custom/plugins/directory.
 
-Unzip the release into your Grafana plugins directory:
+The following shell script downloads and extracts the latest Flight SQL plugin source code into the the current working directory. Run the following inside your grafana plugin directory:
 
-```
-$ unzip influxdata-flightsql-datasource-0.1.6.zip -d grafana-plugins/
-```
+`sh download-grafana-flightsql-plugin.sh`
 
-### Configuration
+### Install local grafana
 
-1. Point Grafana to this the plugins directory. You have two options:
+1. Point your local instance of Grafana to the plugins directory. You have two options:
 
    - Edit the `paths.plugins` directive in your `grafana.ini`:
 
      ```ini
      [paths]
-     plugins = grafana-plugins/
+     plugins = custom/plugins/directory/
      ```
 
    - **OR** set the relevant environment variable where Grafana is started:
      ```shell
-     GF_PATHS_PLUGINS=grafana-plugins/
+     GF_PATHS_PLUGINS=custom/plugins/directory/
      ```
 
-1. The plugin is not yet signed so you will need to add it to the Grafana configuration of allowed unsigned plugins.
+1. Navigate to the [Locally Running Grafana](http://localhost:3000/).
+1. Follow the instructions in [Adding a Flight SQL
+   Datasource](#adding-a-flight-sql-datasource).
+   
+## Install with Docker Run
+
+```
+docker run \
+  --volume $PWD/influxdata-flightsql-datasource:/custom/plugins/directory/influxdata-flightsql-datasource \
+  --publish 3000:3000 \
+  --name grafana \
+  grafana/grafana:latest
+```
+
+## Install with Docker-Compose
+```
+version: '3'
+services:
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - 3000:3000
+    volumes: 
+      - ./influxdata-flightsql-datasource:/custom/plugins/directory/influxdata-flightsql-datasource
+    restart: always
+```
+
+## Note if using versions <=0.1.9 of the plugin
+
+1. The plugin was only signed at version 1.0.0 you will need to add the plugin to your grafana configuration under allow_loading_unsigned_plugins.
 
    - Add the following to your `grafana.ini`:
 
@@ -51,12 +74,6 @@ $ unzip influxdata-flightsql-datasource-0.1.6.zip -d grafana-plugins/
      ```shell
      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=influxdata-flightsql-datasource
      ```
-
-1. Navigate to the [Locally Running Grafana](http://localhost:3000/).
-1. Follow the instructions in [Adding a Flight SQL
-   Datasource](#adding-a-flight-sql-datasource).
-
-:book: Further documentation about [Grafana configuration](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#plugins).
 
 ## Usage
 
