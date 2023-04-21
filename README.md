@@ -35,6 +35,7 @@ The following shell script downloads and extracts the latest Flight SQL plugin s
 1. Navigate to the [Locally Running Grafana](http://localhost:3000/).
 1. Follow the instructions in [Adding a Flight SQL
    Datasource](#adding-a-flight-sql-datasource).
+   
 ## Install with Docker Run
 
 ```
