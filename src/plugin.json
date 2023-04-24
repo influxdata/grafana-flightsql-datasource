@@ -20,8 +20,20 @@
     },
     "links": [
       {
-        "name": "Website",
+        "name": "Github",
         "url": "https://github.com/influxdata/grafana-flightsql-datasource"
+      },
+      {
+        "name": "Docs",
+        "url": "https://github.com/influxdata/grafana-flightsql-datasource/blob/main/README.md#usage"
+      },
+      {
+        "name": "License",
+        "url": "https://github.com/influxdata/grafana-flightsql-datasource/blob/main/LICENSE"
+      },
+      {
+        "name": "Arrow",
+        "url": "https://arrow.apache.org/blog/2022/02/16/introducing-arrow-flight-sql/"
       }
     ],
     "screenshots": [
