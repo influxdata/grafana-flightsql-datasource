@@ -6,7 +6,14 @@ This is a plugin for Grafana that enables queries to Flight SQL APIs.
 
 The plugin requires the user to run Grafana ^9.2.5.
 
-## Installation
+## Install via Grafana Cloud
+Because Grafana Flight SQL Plugin is a community published plugin, you can install it to your existing Grafana Cloud instance.
+
+- In your cloud instance navigate to connections and search for FlightSQL, follow the link to install.
+- Or directly go to this [link](https://grafana.com/grafana/plugins/influxdata-flightsql-datasource/?tab=installation) to install the plugin into your cloud instance.
+- Now in your instance you can navigate back to connections and search for FlightSQL which will be installed and allow you to create a FlightSQL datasource.
+
+## Local installation 
 
 Download the [latest Grafana Flight SQL plugin](https://github.com/influxdata/grafana-flightsql-datasource/releases).
 
