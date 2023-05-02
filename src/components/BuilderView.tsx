@@ -97,7 +97,8 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
 
   useEffect(() => {
     if (column) {
-      handleColumnChange(column, setColumnValues, columnValues)
+      const copyColumns = [...columnValues]
+      handleColumnChange(column, setColumnValues, copyColumns)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [column])
