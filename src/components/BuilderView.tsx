@@ -105,7 +105,8 @@ export function BuilderView({query, datasource, onChange, fromRawSql}: any) {
 
   useEffect(() => {
     if (where) {
-      handleWhereChange(where, setWhereValues, whereValues)
+      const copyWheres = [...whereValues]
+      handleWhereChange(where, setWhereValues, copyWheres)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [where])

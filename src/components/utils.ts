@@ -51,8 +51,13 @@ export const handleColumnChange = (column: any, setColumnValues: any, columnValu
   if (column.index === undefined) {
     column.index = lastIndex
   }
-  columnValues[column.index]['value'] = column?.value
-  setColumnValues(columnValues)
+  const newColumnValues = [
+    ...columnValues.slice(0, column.index),
+    {
+      value: column?.value
+    },
+  ]
+  setColumnValues(newColumnValues)
 }
 
 export const addColumns = (setColumnValues: any, columnValues: any) => {
@@ -66,8 +71,12 @@ export const removeColumns = (i: any, setColumnValues: any, columnValues: any) =
 }
 
 export const handleWhereChange = (where: any, setWhereValues: any, whereValues: any) => {
-  let newWhereValues = [...whereValues]
-  newWhereValues[where.index]['value'] = where.value
+  const newWhereValues = [
+    ...whereValues.slice(0, where.index),
+    {
+      value: where?.value
+    },
+  ]
   setWhereValues(newWhereValues)
 }
 
