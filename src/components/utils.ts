@@ -47,13 +47,12 @@ export const prefixDB = (table: string, dbSchema: string) => {
 }
 
 export const handleColumnChange = (column: any, setColumnValues: any, columnValues: any) => {
-  let newColumnValues = [...columnValues]
-  const lastIndex = newColumnValues.length - 1
+  const lastIndex = columnValues.length - 1
   if (column.index === undefined) {
     column.index = lastIndex
   }
-  newColumnValues[column.index]['value'] = column?.value
-  setColumnValues(newColumnValues)
+  columnValues[column.index]['value'] = column?.value
+  setColumnValues(columnValues)
 }
 
 export const addColumns = (setColumnValues: any, columnValues: any) => {
