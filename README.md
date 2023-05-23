@@ -4,7 +4,7 @@ This is a plugin for Grafana that enables queries to Flight SQL APIs.
 
 ## Requirements
 
-The plugin requires the user to run Grafana ^9.2.5.
+The plugin requires the user to run Grafana >=9.2.5.
 
 ## Install via Grafana Cloud
 Because Grafana Flight SQL Plugin is a community published plugin, you can install it to your existing Grafana Cloud instance.
