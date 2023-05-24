@@ -2,6 +2,9 @@ ARG grafana_version=latest
 
 FROM grafana/grafana:${grafana_version}
 
+# To test against grafana v10
+# FROM grafana/grafana-dev:10.0.0-118006pre
+
 # Make it as simple as possible to access the grafana instance for development purposes
 # Do NOT enable these settings in a public facing / production grafana instance
 ENV GF_AUTH_ANONYMOUS_ORG_ROLE "Admin"
