@@ -15,11 +15,11 @@ export const QueryHelp = () => (
     <div>
       <h3>Supported Macros:</h3>
       <li>
-        $__dateBin(time) -&gt; date_bin(interval &rsquo;30 second&rsquo;, time, interval
+        $__dateBin(time) -&gt; date_bin(interval &rsquo;30 second&rsquo;, time, timestamp
         &rsquo;1970-01-01T00:00:00Z&rsquo;)
       </li>
       <li>
-        $__dateBinAlias(time) -&gt; date_bin(interval &rsquo;30 second&rsquo;, time, interval
+        $__dateBinAlias(time) -&gt; date_bin(interval &rsquo;30 second&rsquo;, time, timestamp
         &rsquo;1970-01-01T00:00:00Z&rsquo;) as time_binned
       </li>
       <li>$__interval -&gt; interval &rsquo;30 second&rsquo;</li>
