@@ -57,7 +57,7 @@ type FlightSQLDatasource struct {
 }
 
 // NewDatasource creates a new datasource instance.
-func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	var cfg config
 
 	err := json.Unmarshal(settings.JSONData, &cfg)
@@ -94,7 +94,6 @@ func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.In
 		}
 	}
 
-	ctx := context.Background()
 	if len(cfg.Username) > 0 || len(cfg.Password) > 0 {
 		ctx, err = client.FlightClient().AuthenticateBasicToken(ctx, cfg.Username, cfg.Password)
 		if err != nil {

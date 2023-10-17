@@ -38,7 +38,7 @@ func TestIntegration_QueryData(t *testing.T) {
 	require.NoError(t, err)
 
 	settings := backend.DataSourceInstanceSettings{JSONData: cfgJSON}
-	ds, err := NewDatasource(settings)
+	ds, err := NewDatasource(context.Background(), settings)
 	require.NoError(t, err)
 
 	resp, err := ds.(*FlightSQLDatasource).QueryData(context.Background(),
