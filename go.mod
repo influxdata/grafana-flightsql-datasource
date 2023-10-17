@@ -1,6 +1,6 @@
 module github.com/influxdata/grafana-flightsql-datasource
 
-go 1.19
+go 1.20
 
 require (
 	github.com/apache/arrow/go/v12 v12.0.0-20230215210516-4550c9b35e67
