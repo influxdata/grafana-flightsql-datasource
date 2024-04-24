@@ -1,10 +1,35 @@
-import {DataSourceInstanceSettings, CoreApp, ScopedVars, VariableWithMultiSupport} from '@grafana/data'
-import {DataSourceWithBackend, getTemplateSrv} from '@grafana/runtime'
+import {DataQueryResponse, MetricFindValue, DataSourceInstanceSettings, CoreApp, ScopedVars, VariableWithMultiSupport} from '@grafana/data'
+import {frameToMetricFindValue, DataSourceWithBackend, getTemplateSrv} from '@grafana/runtime'
 import {SQLQuery, FlightSQLDataSourceOptions, DEFAULT_QUERY} from './types'
+import { lastValueFrom } from 'rxjs';
 
 export class FlightSQLDataSource extends DataSourceWithBackend<SQLQuery, FlightSQLDataSourceOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<FlightSQLDataSourceOptions>) {
     super(instanceSettings)
+  }
+
+async metricFindQuery(queryText: string, options?: any): Promise<MetricFindValue[]> {
+      const target: SQLQuery = {
+        refId: 'metricFindQuery',
+        queryText,
+        rawEditor: true,
+        format: 'table'
+      };
+      return lastValueFrom(
+        super.query({
+          ...(options ?? {}), // includes 'range'
+          targets: [target],
+        })
+      ).then(this.toMetricFindValue);
+  }
+
+  toMetricFindValue(rsp: DataQueryResponse): MetricFindValue[] {
+      const data = rsp.data ?? [];
+      // Create MetricFindValue object for all frames
+      const values = data.map((d) => frameToMetricFindValue(d)).flat();
+      // Filter out duplicate elements
+      return values.filter((elm, idx, self) => idx === self.findIndex((t) => t.text === elm.text));
+                             
   }
 
   getDefaultQuery(_: CoreApp): Partial<SQLQuery> {
