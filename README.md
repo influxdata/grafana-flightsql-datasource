@@ -1,3 +1,5 @@
+:warning: This plugin is not under active development but will be kept up to date with security and bug fixes. Feature PRs should be directed towards the [InfluxDB Grafana](https://github.com/grafana/grafana/tree/main/pkg/tsdb/influxdb) plugin which is now the recommended way to use SQL with InfluxDB 3.0.
+
 # Grafana Flight SQL Datasource
 
 This is a plugin for Grafana that enables queries to Flight SQL APIs.
